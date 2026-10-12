@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f6b8c">
+    <title>Генератор кодов — Сетка / Лента</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            height: 100%;
+            overscroll-behavior: none;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, sans-serif;
+            background: #f0f2f5;
+            padding: 10px;
+            color: #1a1a1a;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 16px;
+        }
+        h1 {
+            font-size: 1.2rem;
+            color: #0a5e7e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        h1 span {
+            font-size: 0.75rem;
+            font-weight: normal;
+        }
+        .toolbar {
+            background: #f8f9fc;
+            border-radius: 14px;
+            padding: 12px;
+            margin-bottom: 14px;
+            border: 1px solid #e2e8f0;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+        .flex-row:last-child {
+            margin-bottom: 0;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 100%;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: #2c3e66;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 16px; /* Важно: 16px предотвращает зум на iOS */
+            font-family: monospace;
+            background: white;
+            color: #1a1a1a;
+        }
+        textarea {
+            font-family: 'Courier New', monospace;
+            min-height: 90px;
+            resize: vertical;
+        }
+        button {
+            background: #0f6b8c;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: 0.15s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            white-space: nowrap;
+            touch-action: manipulation;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        button:active {
+            background: #0a4e6b;
+            transform: scale(0.97);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #4a5b6e;
+        }
+        .btn-secondary:active {
+            background: #2d3a48;
+        }
+        .btn-warning {
+            background: #b91c1c;
+        }
+        .btn-warning:active {
+            background: #8b1515;
+        }
+        .stats {
+            background: #eef2ff;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .stats strong {
+            color: #0f6b8c;
+        }
+
+        /* ===== РЕЖИМ СЕТКИ ===== */
+        .barcode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+            max-height: calc(100vh - 320px);
+            overflow-y: auto;
+            padding: 4px;
+            background: #ffffff;
+            border-radius: 14px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .barcode-card {
+            background: white;
+            border: 1px solid #e4e7eb;
+            border-radius: 14px;
+            padding: 10px 8px 8px 8px;
+            text-align: center;
+            transition: 0.1s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .barcode-card img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .code-value {
+            margin-top: 8px;
+            font-size: 0.65rem;
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 30px;
+            color: #0f172a;
+            word-break: break-all;
+            line-height: 1.3;
+        }
+
+        /* ===== РЕЖИМ ЛЕНТЫ (один код за раз) ===== */
+        .barcode-feed {
+            margin-top: 12px;
+            background: #fafbfc;
+            border-radius: 14px;
+            border: 2px solid #e2e8f0;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 10px;
+            position: relative;
+            transition: 0.2s;
+            touch-action: pan-y;
+            user-select: none;
+        }
+        .feed-item {
+            text-align: center;
+            max-width: 100%;
+            width: 100%;
+        }
+        .feed-item img {
+            max-width: 100%;
+            max-height: 45vh;
+            height: auto;
+            background: white;
+            padding: 12px;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border: 1px solid #eef2f6;
+        }
+        .feed-counter {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e66;
+            margin-top: 14px;
+        }
+        .feed-value {
+            font-family: monospace;
+            font-size: 0.95rem;
+            background: #eef2ff;
+            padding: 8px 14px;
+            border-radius: 40px;
+            margin-top: 8px;
+            word-break: break-all;
+            max-width: 100%;
+            display: inline-block;
+        }
+        .feed-nav-hint {
+            margin-top: 12px;
+            color: #73879a;
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        .feed-empty {
+            color: #73879a;
+            font-size: 1rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Кнопки навигации в ленте для мобильных */
+        .feed-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+            justify-content: center;
+            align-items: center;
+        }
+        .feed-controls button {
+            padding: 12px 20px;
+            min-height: 48px;
+            min-width: 60px;
+            border-radius: 50%;
+            font-size: 1.3rem;
+        }
+        .feed-controls button:disabled {
+            opacity: 0.3;
+        }
+
+        /* ===== ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМОВ ===== */
+        .view-toggle {
+            display: flex;
+            gap: 6px;
+            background: #eef2ff;
+            padding: 4px;
+            border-radius: 60px;
+            align-items: center;
+            flex: 1;
+            min-width: 100%;
+        }
+        .view-toggle button {
+            flex: 1;
+            background: transparent;
+            color: #2c3e66;
+            box-shadow: none;
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            border-radius: 40px;
+            border: 2px solid transparent;
+            min-height: 44px;
+        }
+        .view-toggle button.active {
+            background: white;
+            border-color: #0f6b8c;
+            color: #0a4e6b;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .view-toggle button:active {
+            transform: none;
+        }
+
+        .footer-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: stretch;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .footer-buttons button {
+            flex: 1;
+            min-width: 140px;
+        }
+        hr {
+            margin: 14px 0;
+            border-color: #e2e8f0;
+            border-style: solid;
+            border-width: 1px 0 0 0;
+        }
+        .badge {
+            background: #dbeafe;
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            display: block;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .format-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #eef2ff;
+            padding: 10px 14px;
+            border-radius: 14px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .format-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-height: 44px;
+            flex: 1;
+        }
+        input[type="radio"] {
+            width: 22px;
+            height: 22px;
+            margin: 0;
+            accent-color: #0f6b8c;
+        }
+        .hidden {
+            display: none !important;
+        }
+
+        /* Управление видимостью режимов */
+        .view-grid .barcode-grid { display: grid; }
+        .view-grid .barcode-feed { display: none; }
+        .view-feed .barcode-grid { display: none; }
+        .view-feed .barcode-feed { display: flex; }
+
+        .container-view {
+            transition: 0.15s;
+        }
+
+        /* Планшеты и большие телефоны */
+        @media (min-width: 600px) {
+            body { padding: 16px; }
+            .container { padding: 20px; border-radius: 18px; }
+            h1 { font-size: 1.4rem; }
+            .input-group { min-width: 150px; }
+            .barcode-grid {
+                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+                gap: 14px;
+            }
+            .format-selector { width: auto; }
+            .view-toggle { min-width: auto; flex: 0 1 auto; }
+            .view-toggle button { flex: 0 1 auto; }
+            .feed-item img { max-height: 55vh; }
+        }
+
+        /* Маленькие телефоны */
+        @media (max-width: 380px) {
+            .barcode-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .code-value { font-size: 0.6rem; }
+            h1 { font-size: 1.05rem; }
+        }
+    </style>
+    <!-- БИБЛИОТЕКИ -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+<div class="container container-view" id="appContainer">
+    <h1>📦 Генератор кодов <span>QR / Code128</span></h1>
+    <div class="toolbar">
+        <div class="flex-row">
+            <div class="input-group">
+                <label>📝 Список значений (каждое с новой строки)</label>
+                <textarea id="barcodeList" placeholder="Введите значения, по одному на строку..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+            </div>
+        </div>
+        <div class="flex-row">
+            <div class="format-selector">
+                <span style="font-weight:600; font-size:0.85rem;">🎯 Формат:</span>
+                <label class="format-option">
+                    <input type="radio" name="codeType" value="qr" checked> 🟢 QR-код
+                </label>
+                <label class="format-option">
+                    <input type="radio" name="codeType" value="code128"> 📊 Code 128
+                </label>
+            </div>
+        </div>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>📏 Размер (px)</label>
+                <input type="number" id="sizeInput" value="150" step="10" min="80" inputmode="numeric">
+            </div>
+            <div class="input-group" id="widthGroup" style="display:none;">
+                <label>🔤 Ширина линии</label>
+                <input type="number" id="widthInput" value="2" step="0.5" min="0.8" inputmode="decimal">
+            </div>
+            <div class="input-group" id="textGroup" style="display:none;">
+                <label>📄 Текст под штрихкодом</label>
+                <select id="displayText">
+                    <option value="true">Да</option>
+                    <option value="false">Нет</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex-row">
+            <button id="generateBtn" style="flex:1;">✨ Сгенерировать</button>
+        </div>
+        <div class="flex-row" style="justify-content:space-between; align-items:center;">
+            <div class="view-toggle">
+                <button id="viewGridBtn" class="active">📐 Сетка</button>
+                <button id="viewFeedBtn">📜 Лента</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats" id="statsPanel" style="display: none;">
+        <span>🔢 Всего: <strong id="totalCount">0</strong></span>
+        <span>⚡ Тип: <strong id="currentTypeLabel">QR-код</strong></span>
+        <span id="feedPositionDisplay" style="display:none;">📍 <span id="feedPosNum">1</span> / <span id="feedTotalNum">0</span></span>
+    </div>
+
+    <!-- СЕТКА -->
+    <div id="gridContainer" class="barcode-grid">
+        <div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:#73879a;">⬅️ Введите данные и нажмите «Сгенерировать»</div>
+    </div>
+
+    <!-- ЛЕНТА (один код за раз) -->
+    <div id="feedContainer" class="barcode-feed">
+        <div class="feed-empty">🔍 Нет данных. Сгенерируйте коды и переключитесь в режим «Лента».</div>
+    </div>
+
+    <div class="footer-buttons">
+        <button id="downloadZipBtn" class="btn-secondary" disabled>📦 Скачать ZIP</button>
+        <button id="clearBtn" class="btn-warning">🗑️ Очистить</button>
+    </div>
+    <hr>
+    <div class="badge">⚡ Свайп в ленте или стрелки клавиатуры для навигации</div>
+</div>
+
+<script>
+    (function() {
+        // ===== DOM =====
+        const textarea = document.getElementById('barcodeList');
+        const generateBtn = document.getElementById('generateBtn');
+        const gridContainer = document.getElementById('gridContainer');
+        const feedContainer = document.getElementById('feedContainer');
+        const statsPanel = document.getElementById('statsPanel');
+        const totalCountSpan = document.getElementById('totalCount');
+        const downloadZipBtn = document.getElementById('downloadZipBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const currentTypeLabel = document.getElementById('currentTypeLabel');
+        const feedPosDisplay = document.getElementById('feedPositionDisplay');
+        const feedPosNum = document.getElementById('feedPosNum');
+        const feedTotalNum = document.getElementById('feedTotalNum');
+        const appContainer = document.getElementById('appContainer');
+
+        // Кнопки переключения режимов
+        const viewGridBtn = document.getElementById('viewGridBtn');
+        const viewFeedBtn = document.getElementById('viewFeedBtn');
+
+        // Форматы
+        const qrRadio = document.querySelector('input[value="qr"]');
+        const code128Radio = document.querySelector('input[value="code128"]');
+        const sizeInput = document.getElementById('sizeInput');
+        const widthInput = document.getElementById('widthInput');
+        const displayText = document.getElementById('displayText');
+        const widthGroup = document.getElementById('widthGroup');
+        const textGroup = document.getElementById('textGroup');
+
+        // ===== Состояние =====
+        let currentBarcodes = [];
+        let currentFormat = 'qr';
+        let currentView = 'grid';
+        let feedIndex = 0;
+
+        // ===== Переключение формата =====
+        function onFormatChange() {
+            if (qrRadio.checked) {
+                currentFormat = 'qr';
+                currentTypeLabel.innerText = 'QR-код';
+                widthGroup.style.display = 'none';
+                textGroup.style.display = 'none';
+            } else {
+                currentFormat = 'code128';
+                currentTypeLabel.innerText = 'Code 128';
+                widthGroup.style.display = 'block';
+                textGroup.style.display = 'block';
+            }
+        }
+        qrRadio.addEventListener('change', onFormatChange);
+        code128Radio.addEventListener('change', onFormatChange);
+        onFormatChange();
+
+        // ===== Переключение режимов просмотра =====
+        function setView(mode) {
+            currentView = mode;
+            if (mode === 'grid') {
+                appContainer.classList.remove('view-feed');
+                appContainer.classList.add('view-grid');
+                viewGridBtn.classList.add('active');
+                viewFeedBtn.classList.remove('active');
+                feedPosDisplay.style.display = 'none';
+                renderGrid(currentBarcodes);
+            } else {
+                appContainer.classList.remove('view-grid');
+                appContainer.classList.add('view-feed');
+                viewFeedBtn.classList.add('active');
+                viewGridBtn.classList.remove('active');
+                feedPosDisplay.style.display = 'inline-block';
+                renderFeed(currentBarcodes, feedIndex);
+            }
+        }
+
+        viewGridBtn.addEventListener('click', () => setView('grid'));
+        viewFeedBtn.addEventListener('click', () => {
+            if (currentBarcodes.length === 0) {
+                alert('⚠️ Сначала сгенерируйте коды!');
+                return;
+            }
+            setView('feed');
+        });
+
+        // ===== Клавиши клавиатуры для ленты =====
+        document.addEventListener('keydown', (e) => {
+            if (currentView !== 'feed' || currentBarcodes.length === 0) return;
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (feedIndex < currentBarcodes.length - 1) {
+                    feedIndex++;
+                    renderFeed(currentBarcodes, feedIndex);
+                }
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (feedIndex > 0) {
+                    feedIndex--;
+                    renderFeed(currentBarcodes, feedIndex);
+                }
+            }
+        });
+
+        // ===== Свайпы в ленте =====
+        let touchStartY = 0;
+        let touchEndY = 0;
+        const SWIPE_THRESHOLD = 50;
+
+        feedContainer.addEventListener('touchstart', (e) => {
+            if (currentView !== 'feed' || currentBarcodes.length === 0) return;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        feedContainer.addEventListener('touchend', (e) => {
+            if (currentView !== 'feed' || currentBarcodes.length === 0) return;
+            touchEndY = e.changedTouches[0].screenY;
+            const diff = touchStartY - touchEndY;
+            if (Math.abs(diff) > SWIPE_THRESHOLD) {
+                if (diff > 0 && feedIndex < currentBarcodes.length - 1) {
+                    feedIndex++;
+                } else if (diff < 0 && feedIndex > 0) {
+                    feedIndex--;
+                }
+                renderFeed(currentBarcodes, feedIndex);
+            }
+        }, { passive: true });
+
+        // ===== Генерация QR =====
+        function generateQRCode(value, size) {
+            return new Promise((resolve) => {
+                if (!value || value.trim() === '') { resolve(null); return; }
+                const tempDiv = document.createElement('div');
+                tempDiv.style.width = size + 'px';
+                tempDiv.style.height = size + 'px';
+                try {
+                    new QRCode(tempDiv, {
+                        text: value.trim(),
+                        width: parseInt(size),
+                        height: parseInt(size),
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    setTimeout(() => {
+                        const canvas = tempDiv.querySelector('canvas');
+                        if (canvas) {
+                            resolve({ value: value.trim(), dataUrl: canvas.toDataURL('image/png') });
+                        } else {
+                            const img = tempDiv.querySelector('img');
+                            if (img && img.src) resolve({ value: value.trim(), dataUrl: img.src });
+                            else resolve(null);
+                        }
+                    }, 30);
+                } catch(e) { resolve(null); }
+            });
+        }
+
+        // ===== Генерация Code128 =====
+        function generateCode128(value, widthModule, height, showText) {
+            return new Promise((resolve) => {
+                if (!value || value.trim() === '') { resolve(null); return; }
+                const canvas = document.createElement('canvas');
+                try {
+                    JsBarcode(canvas, value.trim(), {
+                        format: 'CODE128',
+                        width: parseFloat(widthModule),
+                        height: parseInt(height, 10),
+                        displayValue: showText === 'true',
+                        fontSize: 14,
+                        margin: 8,
+                        background: '#ffffff',
+                        lineColor: '#000000'
+                    });
+                    setTimeout(() => {
+                        resolve({ value: value.trim(), dataUrl: canvas.toDataURL('image/png') });
+                    }, 10);
+                } catch(e) { resolve(null); }
+            });
+        }
+
+        // ===== ГЛАВНАЯ ГЕНЕРАЦИЯ =====
+        async function generateAll() {
+            const rawLines = textarea.value.split(/\r?\n/);
+            const codesList = rawLines.filter(line => line.trim().length > 0);
+            if (codesList.length === 0) {
+                alert('❌ Введите хотя бы один код!');
+                return;
+            }
+            if (codesList.length > 1200 && !confirm(`Вы генерируете ${codesList.length} кодов. Продолжить?`)) {
+                return;
+            }
+
+            gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">⏳ Генерация ${codesList.length} кодов...</div>`;
+            feedContainer.innerHTML = `<div class="feed-empty">⏳ Генерируем...</div>`;
+            currentBarcodes = [];
+
+            const sizeVal = parseInt(sizeInput.value, 10);
+            const results = [];
+
+            if (currentFormat === 'qr') {
+                for (let i = 0; i < codesList.length; i++) {
+                    const res = await generateQRCode(codesList[i], sizeVal);
+                    if (res) results.push(res);
+                    if (i % 30 === 0 && i > 0) {
+                        gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">🔄 ${i} / ${codesList.length}...</div>`;
+                    }
+                }
+            } else {
+                const widthVal = widthInput.value;
+                const heightVal = sizeVal;
+                const showTextVal = displayText.value;
+                for (let i = 0; i < codesList.length; i++) {
+                    const res = await generateCode128(codesList[i], widthVal, heightVal, showTextVal);
+                    if (res) results.push(res);
+                    if (i % 30 === 0 && i > 0) {
+                        gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">🔄 ${i} / ${codesList.length}...</div>`;
+                    }
+                }
+            }
+
+            currentBarcodes = results;
+            feedIndex = 0;
+
+            totalCountSpan.innerText = results.length;
+            statsPanel.style.display = 'flex';
+            downloadZipBtn.disabled = (results.length === 0);
+            feedTotalNum.innerText = results.length;
+
+            if (currentView === 'grid') {
+                renderGrid(results);
+            } else {
+                renderFeed(results, 0);
+            }
+        }
+
+        // ===== ОТРИСОВКА СЕТКИ =====
+        function renderGrid(barcodes) {
+            gridContainer.innerHTML = '';
+            if (!barcodes || barcodes.length === 0) {
+                gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:#73879a;">🔍 Нет кодов для отображения</div>`;
+                return;
+            }
+            for (let item of barcodes) {
+                const card = document.createElement('div');
+                card.className = 'barcode-card';
+                const img = document.createElement('img');
+                img.src = item.dataUrl;
+                img.alt = item.value;
+                const span = document.createElement('div');
+                span.className = 'code-value';
+                span.innerText = item.value.length > 45 ? item.value.slice(0,42)+'...' : item.value;
+                card.appendChild(img);
+                card.appendChild(span);
+                gridContainer.appendChild(card);
+            }
+        }
+
+        // ===== ОТРИСОВКА ЛЕНТЫ =====
+        function renderFeed(barcodes, index) {
+            if (!barcodes || barcodes.length === 0) {
+                feedContainer.innerHTML = `<div class="feed-empty">🔍 Нет данных.</div>`;
+                return;
+            }
+            if (index < 0) index = 0;
+            if (index >= barcodes.length) index = barcodes.length - 1;
+            feedIndex = index;
+
+            const item = barcodes[index];
+            const isFirst = index === 0;
+            const isLast = index === barcodes.length - 1;
+
+            feedContainer.innerHTML = `
+                <div class="feed-item">
+                    <img src="${item.dataUrl}" alt="Код ${index+1}" />
+                    <div class="feed-counter">${index+1} / ${barcodes.length}</div>
+                    <div class="feed-value">${item.value}</div>
+                    <div class="feed-controls">
+                        <button id="feedPrevBtn" ${isFirst ? 'disabled' : ''} aria-label="Предыдущий">▲</button>
+                        <button id="feedNextBtn" ${isLast ? 'disabled' : ''} aria-label="Следующий">▼</button>
+                    </div>
+                    <div class="feed-nav-hint">Свайп вверх/вниз или стрелки</div>
+                </div>
+            `;
+            feedPosNum.innerText = index+1;
+            feedTotalNum.innerText = barcodes.length;
+
+            const prevBtn = document.getElementById('feedPrevBtn');
+            const nextBtn = document.getElementById('feedNextBtn');
+            if (prevBtn) prevBtn.addEventListener('click', () => {
+                if (feedIndex > 0) renderFeed(currentBarcodes, feedIndex - 1);
+            });
+            if (nextBtn) nextBtn.addEventListener('click', () => {
+                if (feedIndex < currentBarcodes.length - 1) renderFeed(currentBarcodes, feedIndex + 1);
+            });
+        }
+
+        // ===== ОЧИСТКА =====
+        function clearAll() {
+            if (currentBarcodes.length > 0 && !confirm('Удалить все сгенерированные коды?')) return;
+            textarea.value = '';
+            currentBarcodes = [];
+            gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:#73879a;">⬅️ Введите данные и нажмите «Сгенерировать»</div>`;
+            feedContainer.innerHTML = `<div class="feed-empty">🔍 Нет данных.</div>`;
+            statsPanel.style.display = 'none';
+            downloadZipBtn.disabled = true;
+            feedIndex = 0;
+        }
+
+        // ===== СКАЧИВАНИЕ ZIP =====
+        function downloadAllAsZip() {
+            if (!currentBarcodes.length) {
+                alert('Нет данных. Сначала сгенерируйте коды.');
+                return;
+            }
+            const zip = new JSZip();
+            const folder = zip.folder(currentFormat === 'qr' ? 'qr_codes' : 'code128_barcodes');
+            for (let i = 0; i < currentBarcodes.length; i++) {
+                const b = currentBarcodes[i];
+                let safeName = b.value.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
+                if (!safeName) safeName = `code_${i+1}`;
+                const fileName = `${safeName}.png`;
+                const imageData = b.dataUrl.split(',')[1];
+                const blob = base64ToBlob(imageData, 'image/png');
+                folder.file(fileName, blob);
+            }
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                const zipName = currentFormat === 'qr' ? 'qr_codes.zip' : 'code128_barcodes.zip';
+                saveAs(content, zipName);
+            }).catch(err => {
+                alert('Ошибка создания архива.');
+                console.error(err);
+            });
+        }
+
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+            return new Blob(byteArrays, { type: mimeType });
+        }
+
+        // ===== ДЕМО-ЗАПОЛНЕНИЕ =====
+        function fillDemo() {
+            const demo = [];
+            for (let i = 1; i <= 20; i++) {
+                demo.push(`ТОВАР-${String(i).padStart(3,'0')}`);
+            }
+            demo.push('https://example.com/product/500');
+            demo.push('АРТИКУЛ-SUPER-500');
+            textarea.value = demo.join('\n');
+        }
+        if (textarea.value.trim() === '') fillDemo();
+
+        // ===== СОБЫТИЯ =====
+        generateBtn.addEventListener('click', generateAll);
+        downloadZipBtn.addEventListener('click', downloadAllAsZip);
+        clearBtn.addEventListener('click', clearAll);
+
+        // Инициализация: режим сетки
+        setView('grid');
+    })();
+</script>
+</body>
+</html>
