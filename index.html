@@ -820,18 +820,6 @@
             return new Blob(byteArrays, { type: mimeType });
         }
 
-        // ===== ДЕМО-ЗАПОЛНЕНИЕ =====
-        function fillDemo() {
-            const demo = [];
-            for (let i = 1; i <= 20; i++) {
-                demo.push(`ТОВАР-${String(i).padStart(3,'0')}`);
-            }
-            demo.push('https://example.com/product/500');
-            demo.push('АРТИКУЛ-SUPER-500');
-            textarea.value = demo.join('\n');
-        }
-        if (textarea.value.trim() === '') fillDemo();
-
         // ===== СОБЫТИЯ =====
         generateBtn.addEventListener('click', generateAll);
         downloadZipBtn.addEventListener('click', downloadAllAsZip);
