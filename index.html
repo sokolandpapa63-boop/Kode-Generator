@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Генератор кодов — Этикетки OZON</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -15,7 +16,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Golos Text', sans-serif; background: #f0f2f5; padding: 20px; }
         .container { max-width: 1300px; margin: 0 auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        h1 { color: #0a5e7e; margin-bottom: 20px; }
+        h1 { color: #0a5e7e; margin-bottom: 20px; font-size: 1.6rem; }
         .toolbar { background: #f8f9fc; border-radius: 16px; padding: 20px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
         .flex-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; align-items: flex-end; }
         .input-group { flex: 1; min-width: 150px; }
@@ -23,15 +24,13 @@
         textarea, input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; font-family: 'Golos Text', sans-serif; background: white; }
         textarea { font-family: 'Courier New', monospace; min-height: 120px; }
         button { background: #0f6b8c; color: white; border: none; padding: 10px 24px; border-radius: 40px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: 0.2s; font-family: 'Golos Text', sans-serif; }
-        button:hover { background: #0a4e6b; }
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
-        .btn-secondary { background: #4a5b6e; }
-        .btn-warning { background: #b91c1c; }
+        button:hover { background: #0a4e6b; transform: translateY(-1px); }
+        button:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
         .main-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
         .main-tabs button { background: transparent; color: #2c3e66; border-radius: 12px 12px 0 0; padding: 10px 22px; border: 2px solid transparent; border-bottom: none; font-size: 1rem; }
         .main-tabs button.active { background: white; border-color: #0f6b8c; color: #0a4e6b; font-weight: bold; }
         .hidden { display: none !important; }
-        .footer-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+        .badge { background: #dbeafe; padding: 5px 12px; border-radius: 50px; font-size: 0.8rem; display: inline-block; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -42,6 +41,7 @@
         <button id="tabLabels">🖨️ Этикетки OZON (A4)</button>
     </div>
 
+    <!-- ВКЛАДКА 1: ОБЫЧНЫЕ QR -->
     <div id="panelMain">
         <div class="toolbar">
             <div class="flex-row">
@@ -61,36 +61,39 @@
         <div id="gridContainer" style="display:flex; flex-wrap:wrap; gap:15px; margin-top:20px;"></div>
     </div>
 
+    <!-- ВКЛАДКА 2: ЭТИКЕТКИ OZON -->
     <div id="panelLabels" class="hidden">
         <div class="toolbar">
             <div class="flex-row">
                 <div class="input-group" style="flex:2;">
-                    <label>📋 Список кодов (формат: <code>10_цифр-текст</code>)</label>
+                    <label>📋 Список кодов (формат: <code>10_цифр-текст</code> или просто <code>код</code>)</label>
                     <textarea id="labelCodesList" placeholder="0123456789-0018-&#10;9876543210-ABC-123" style="min-height:120px;"></textarea>
                 </div>
             </div>
             <div class="flex-row">
                 <div class="input-group">
-                    <label>🏷️ Текст по умолчанию</label>
+                    <label>🏷️ Текст по умолчанию (под QR)</label>
                     <input type="text" id="labelDefaultText" value="ХИМКИ_235">
                 </div>
                 <div class="input-group">
-                    <label>📏 DPI</label>
+                    <label>📏 DPI (качество печати)</label>
                     <select id="labelDpi">
-                        <option value="203">203</option>
-                        <option value="300" selected>300</option>
-                        <option value="600">600</option>
+                        <option value="203">203 (термопринтер)</option>
+                        <option value="300" selected>300 (обычный принтер)</option>
+                        <option value="600">600 (высокое качество)</option>
                     </select>
                 </div>
                 <div><button id="generateLabelsBtn">✨ Сгенерировать PDF</button></div>
             </div>
         </div>
     </div>
+
+    <div class="badge">⚡ Если цифры не появляются — проверь папку <code>digits/</code> рядом с index.html</div>
 </div>
 
 <script>
 // =====================================================================
-// ===== СЮДА ВСТАВЬ БЛОК digitImages ИЗ СООБЩЕНИЯ 2 =====
+// ===== ПУТИ К КАРТИНКАМ ЦИФР =====
 // =====================================================================
 const digitImages = {
     '0': 'digits/0.png',
@@ -105,16 +108,18 @@ const digitImages = {
     '9': 'digits/9.png',
     '-': 'digits/dash.png'
 };
+
 // =====================================================================
-// ===== ЗАГРУЗКА ВСЕХ КАРТИНОК ПЕРЕД ГЕНЕРАЦИЕЙ =====
+// ===== ЗАГРУЗКА КАРТИНОК =====
 // =====================================================================
 const loadedImages = {};
 let imagesLoaded = false;
+let loadErrors = 0;
 
 function preloadImages() {
     return new Promise((resolve) => {
-        let count = 0;
         const keys = Object.keys(digitImages);
+        let count = 0;
         keys.forEach(key => {
             const img = new Image();
             img.onload = () => {
@@ -123,6 +128,8 @@ function preloadImages() {
                 if (count === keys.length) { imagesLoaded = true; resolve(); }
             };
             img.onerror = () => {
+                console.warn('Не загрузилась картинка: ' + digitImages[key]);
+                loadErrors++;
                 count++;
                 if (count === keys.length) { imagesLoaded = true; resolve(); }
             };
@@ -132,20 +139,12 @@ function preloadImages() {
 }
 
 // =====================================================================
-// ===== ОСТАЛЬНАЯ ЛОГИКА =====
+// ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
 // =====================================================================
 const tabMain = document.getElementById('tabMain');
 const tabLabels = document.getElementById('tabLabels');
 const panelMain = document.getElementById('panelMain');
 const panelLabels = document.getElementById('panelLabels');
-const barcodeList = document.getElementById('barcodeList');
-const generateBtn = document.getElementById('generateBtn');
-const sizeInput = document.getElementById('sizeInput');
-const gridContainer = document.getElementById('gridContainer');
-const labelCodesList = document.getElementById('labelCodesList');
-const labelDefaultText = document.getElementById('labelDefaultText');
-const labelDpi = document.getElementById('labelDpi');
-const generateLabelsBtn = document.getElementById('generateLabelsBtn');
 
 tabMain.addEventListener('click', () => {
     tabMain.classList.add('active');
@@ -160,6 +159,9 @@ tabLabels.addEventListener('click', () => {
     panelMain.classList.add('hidden');
 });
 
+// =====================================================================
+// ===== УТИЛИТЫ =====
+// =====================================================================
 const mmToPx = (mm, dpi) => Math.round(mm * dpi / 25.4);
 
 function invertImage(img) {
@@ -179,27 +181,47 @@ function invertImage(img) {
     return canvas;
 }
 
-function drawImageString(ctx, str, x, y, size, spacing, isInverted = false) {
+// Отрисовка строки из картинок с сохранением пропорций
+function drawImageString(ctx, str, x, y, targetHeight, spacing, isInverted = false) {
     let currentX = x;
     for (let char of str) {
         const img = loadedImages[char];
         if (img) {
+            const scale = targetHeight / img.height;
+            const drawW = img.width * scale;
             if (isInverted) {
                 const invCanvas = invertImage(img);
-                ctx.drawImage(invCanvas, currentX, y, size, size);
+                ctx.drawImage(invCanvas, currentX, y, drawW, targetHeight);
             } else {
-                ctx.drawImage(img, currentX, y, size, size);
+                ctx.drawImage(img, currentX, y, drawW, targetHeight);
             }
-            currentX += size + spacing;
+            currentX += drawW + spacing;
+        } else {
+            // Фолбэк (если картинки нет)
+            ctx.fillStyle = isInverted ? '#fff' : '#000';
+            ctx.fillRect(currentX, y, targetHeight * 0.6, targetHeight);
+            currentX += targetHeight * 0.6 + spacing;
         }
     }
     return currentX;
 }
 
-function measureImageString(str, size, spacing) {
-    return str.length * (size + spacing) - spacing;
+// Измерение реальной ширины строки из картинок
+function measureImageString(ctx, str, targetHeight, spacing) {
+    let width = 0;
+    for (let char of str) {
+        const img = loadedImages[char];
+        if (img) {
+            const scale = targetHeight / img.height;
+            width += img.width * scale + spacing;
+        } else {
+            width += targetHeight * 0.6 + spacing;
+        }
+    }
+    return width > 0 ? width - spacing : 0;
 }
 
+// Генерация QR
 function generateQR(value, size) {
     return new Promise((resolve) => {
         const tempDiv = document.createElement('div');
@@ -226,14 +248,19 @@ function generateQR(value, size) {
     });
 }
 
+// =====================================================================
+// ===== ВКЛАДКА 1: ГЕНЕРАЦИЯ QR =====
+// =====================================================================
+const barcodeList = document.getElementById('barcodeList');
+const generateBtn = document.getElementById('generateBtn');
+const sizeInput = document.getElementById('sizeInput');
+const gridContainer = document.getElementById('gridContainer');
+
 generateBtn.addEventListener('click', async () => {
-    if (!imagesLoaded) await preloadImages();
     const raw = barcodeList.value.split(/\r?\n/).filter(l => l.trim());
     if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
-    
     gridContainer.innerHTML = '';
     const sizeVal = parseInt(sizeInput.value, 10);
-    
     for (let val of raw) {
         const qrCanvas = await generateQR(val, sizeVal);
         if (qrCanvas) {
@@ -242,18 +269,25 @@ generateBtn.addEventListener('click', async () => {
             card.appendChild(qrCanvas);
             const textDiv = document.createElement('div');
             textDiv.innerText = val;
-            textDiv.style.cssText = 'font-size:10px; margin-top:5px; word-break:break-all;';
+            textDiv.style.cssText = 'font-size:10px; margin-top:5px; word-break:break-all; max-width:150px; font-family:monospace;';
             card.appendChild(textDiv);
             gridContainer.appendChild(card);
         }
     }
 });
 
+// =====================================================================
+// ===== ВКЛАДКА 2: ЭТИКЕТКИ =====
+// =====================================================================
+const labelCodesList = document.getElementById('labelCodesList');
+const labelDefaultText = document.getElementById('labelDefaultText');
+const labelDpi = document.getElementById('labelDpi');
+const generateLabelsBtn = document.getElementById('generateLabelsBtn');
+
 async function drawLabel(ctx, pos, labelW, labelH, codeData, defaultText, dpi) {
-    if (!imagesLoaded) await preloadImages();
     const qrValue = codeData.qr;
 
-    // Рамка
+    // Пунктирная рамка
     ctx.save();
     ctx.strokeStyle = '#999';
     ctx.lineWidth = Math.max(1, mmToPx(0.3, dpi));
@@ -277,8 +311,7 @@ async function drawLabel(ctx, pos, labelW, labelH, codeData, defaultText, dpi) {
     ctx.fillText(defaultText || 'ХИМКИ_235', pos.x + labelW / 2, pos.y + mmToPx(50, dpi));
     ctx.restore();
 
-    // Основной код (картинками)
-    ctx.save();
+    // Разбор кода
     const firstDashIndex = qrValue.indexOf('-');
     let line1 = qrValue;
     let line2 = '';
@@ -297,49 +330,63 @@ async function drawLabel(ctx, pos, labelW, labelH, codeData, defaultText, dpi) {
         last4Part = line1.slice(-4);
     }
 
-    const digitSize = mmToPx(10, dpi);
-    const spacing = mmToPx(0.5, dpi);
+    // === НАСТРОЙКИ РАЗМЕРОВ И ОТСТУПОВ ===
+    const digitHeight = mmToPx(12, dpi); // Высота цифр (12 мм — подбери под макет)
+    const spacing = mmToPx(1.5, dpi);    // Отступ между цифрами (1.5 мм)
 
-    const prefixWidth = measureImageString(prefixPart, digitSize, spacing);
-    const last4Width = measureImageString(last4Part, digitSize, spacing);
+    const prefixWidth = prefixPart ? measureImageString(ctx, prefixPart, digitHeight, spacing) : 0;
+    const last4Width = last4Part ? measureImageString(ctx, last4Part, digitHeight, spacing) : 0;
+    
+    // Общая ширина: префикс + отступ + последние 4
     const fullWidth = prefixWidth + last4Width + (prefixPart && last4Part ? spacing : 0);
 
     const startX = pos.x + (labelW - fullWidth) / 2;
-    const line1Y = pos.y + mmToPx(62, dpi);
+    const line1Y = pos.y + mmToPx(64, dpi); // Высота первой строки
 
-    // Подложка
+    // Чёрная подложка под последние 4
     if (last4Part) {
-        const bgPadX = mmToPx(0.5, dpi);
-        const bgPadY = mmToPx(0.5, dpi);
-        const radius = mmToPx(1, dpi);
+        const bgPadX = mmToPx(1, dpi);   // Отступ подложки по бокам
+        const bgPadY = mmToPx(0.5, dpi); // Отступ подложки сверху/снизу
+        const radius = mmToPx(1.5, dpi); // Радиус скругления
+        
         ctx.fillStyle = '#000';
         ctx.beginPath();
         if (ctx.roundRect) {
-            ctx.roundRect(startX + prefixWidth + (prefixPart?spacing:0) - bgPadX, line1Y - bgPadY, last4Width + bgPadX*2, digitSize + bgPadY*2, radius);
+            ctx.roundRect(
+                startX + prefixWidth + (prefixPart ? spacing : 0) - bgPadX, 
+                line1Y - bgPadY, 
+                last4Width + bgPadX * 2, 
+                digitHeight + bgPadY * 2, 
+                radius
+            );
         } else {
-            ctx.rect(startX + prefixWidth + (prefixPart?spacing:0) - bgPadX, line1Y - bgPadY, last4Width + bgPadX*2, digitSize + bgPadY*2);
+            ctx.rect(
+                startX + prefixWidth + (prefixPart ? spacing : 0) - bgPadX, 
+                line1Y - bgPadY, 
+                last4Width + bgPadX * 2, 
+                digitHeight + bgPadY * 2
+            );
         }
         ctx.fill();
     }
 
-    // Рисуем префикс
+    // Рисуем префикс (чёрный)
     if (prefixPart) {
-        drawImageString(ctx, prefixPart, startX, line1Y, digitSize, spacing, false);
+        drawImageString(ctx, prefixPart, startX, line1Y, digitHeight, spacing, false);
     }
-    // Рисуем подложку (инвертированные)
+    // Рисуем последние 4 (белые)
     if (last4Part) {
-        drawImageString(ctx, last4Part, startX + prefixWidth + (prefixPart?spacing:0), line1Y, digitSize, spacing, true);
+        drawImageString(ctx, last4Part, startX + prefixWidth + (prefixPart ? spacing : 0), line1Y, digitHeight, spacing, true);
     }
 
-    // Вторая строка
+    // Вторая строка (с тире)
     if (line2) {
-        const line2Width = measureImageString(line2, digitSize * 0.8, spacing);
+        const line2Height = digitHeight * 0.85; // Чуть меньше первой
+        const line2Width = measureImageString(ctx, line2, line2Height, spacing);
         const line2X = pos.x + (labelW - line2Width) / 2;
-        const line2Y = line1Y + digitSize + mmToPx(4, dpi);
-        drawImageString(ctx, line2, line2X, line2Y, digitSize * 0.8, spacing, false);
+        const line2Y = line1Y + digitHeight + mmToPx(4, dpi); // Отступ между строками
+        drawImageString(ctx, line2, line2X, line2Y, line2Height, spacing, false);
     }
-
-    ctx.restore();
 }
 
 async function renderSheetCanvas(codes, dpi) {
@@ -371,7 +418,17 @@ async function renderSheetCanvas(codes, dpi) {
 }
 
 generateLabelsBtn.addEventListener('click', async () => {
-    if (!imagesLoaded) await preloadImages();
+    if (!imagesLoaded) {
+        generateLabelsBtn.textContent = '⏳ Загрузка картинок...';
+        await preloadImages();
+    }
+    if (loadErrors > 0) {
+        if (!confirm(`Не удалось загрузить ${loadErrors} картинок. Проверь папку digits. Продолжить?`)) {
+            generateLabelsBtn.textContent = '✨ Сгенерировать PDF';
+            return;
+        }
+    }
+
     const raw = labelCodesList.value.split(/\r?\n/).filter(l => l.trim());
     if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
 
@@ -390,7 +447,6 @@ generateLabelsBtn.addEventListener('click', async () => {
     try {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
         for (let s = 0; s < sheets.length; s++) {
             const canvas = await renderSheetCanvas(sheets[s], dpi);
             const imgData = canvas.toDataURL('image/png');
@@ -400,6 +456,7 @@ generateLabelsBtn.addEventListener('click', async () => {
         pdf.save(`ozon_labels_${dpi}dpi.pdf`);
     } catch (err) {
         alert('Ошибка при генерации PDF: ' + err.message);
+        console.error(err);
     } finally {
         generateLabelsBtn.disabled = false;
         generateLabelsBtn.textContent = '✨ Сгенерировать PDF';
@@ -407,7 +464,10 @@ generateLabelsBtn.addEventListener('click', async () => {
 });
 
 // Инициализация
-preloadImages();
+preloadImages().then(() => {
+    if (loadErrors > 0) console.warn(`Не загружено картинок: ${loadErrors}`);
+    else console.log('Все картинки загружены успешно!');
+});
 </script>
 </body>
 </html>
