@@ -2,832 +2,412 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f6b8c">
-    <title>Генератор кодов — Сетка / Лента</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-        html, body {
-            height: 100%;
-            overscroll-behavior: none;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, sans-serif;
-            background: #f0f2f5;
-            padding: 10px;
-            color: #1a1a1a;
-            font-size: 16px;
-            line-height: 1.4;
-        }
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            padding: 16px;
-        }
-        h1 {
-            font-size: 1.2rem;
-            color: #0a5e7e;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-        h1 span {
-            font-size: 0.75rem;
-            font-weight: normal;
-        }
-        .toolbar {
-            background: #f8f9fc;
-            border-radius: 14px;
-            padding: 12px;
-            margin-bottom: 14px;
-            border: 1px solid #e2e8f0;
-        }
-        .flex-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
-            align-items: flex-end;
-        }
-        .flex-row:last-child {
-            margin-bottom: 0;
-        }
-        .input-group {
-            flex: 1;
-            min-width: 100%;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            font-size: 0.8rem;
-            margin-bottom: 4px;
-            color: #2c3e66;
-        }
-        textarea, input, select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            font-size: 16px; /* Важно: 16px предотвращает зум на iOS */
-            font-family: monospace;
-            background: white;
-            color: #1a1a1a;
-        }
-        textarea {
-            font-family: 'Courier New', monospace;
-            min-height: 90px;
-            resize: vertical;
-        }
-        button {
-            background: #0f6b8c;
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 40px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: 0.15s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            white-space: nowrap;
-            touch-action: manipulation;
-            min-height: 48px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        button:active {
-            background: #0a4e6b;
-            transform: scale(0.97);
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .btn-secondary {
-            background: #4a5b6e;
-        }
-        .btn-secondary:active {
-            background: #2d3a48;
-        }
-        .btn-warning {
-            background: #b91c1c;
-        }
-        .btn-warning:active {
-            background: #8b1515;
-        }
-        .stats {
-            background: #eef2ff;
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-bottom: 12px;
-            font-weight: 500;
-            font-size: 0.85rem;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .stats strong {
-            color: #0f6b8c;
-        }
-
-        /* ===== РЕЖИМ СЕТКИ ===== */
-        .barcode-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
-            max-height: calc(100vh - 320px);
-            overflow-y: auto;
-            padding: 4px;
-            background: #ffffff;
-            border-radius: 14px;
-            -webkit-overflow-scrolling: touch;
-        }
-        .barcode-card {
-            background: white;
-            border: 1px solid #e4e7eb;
-            border-radius: 14px;
-            padding: 10px 8px 8px 8px;
-            text-align: center;
-            transition: 0.1s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-        .barcode-card img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-        .code-value {
-            margin-top: 8px;
-            font-size: 0.65rem;
-            font-family: monospace;
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 30px;
-            color: #0f172a;
-            word-break: break-all;
-            line-height: 1.3;
-        }
-
-        /* ===== РЕЖИМ ЛЕНТЫ (один код за раз) ===== */
-        .barcode-feed {
-            margin-top: 12px;
-            background: #fafbfc;
-            border-radius: 14px;
-            border: 2px solid #e2e8f0;
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 16px 10px;
-            position: relative;
-            transition: 0.2s;
-            touch-action: pan-y;
-            user-select: none;
-        }
-        .feed-item {
-            text-align: center;
-            max-width: 100%;
-            width: 100%;
-        }
-        .feed-item img {
-            max-width: 100%;
-            max-height: 45vh;
-            height: auto;
-            background: white;
-            padding: 12px;
-            border-radius: 14px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            border: 1px solid #eef2f6;
-        }
-        .feed-counter {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #2c3e66;
-            margin-top: 14px;
-        }
-        .feed-value {
-            font-family: monospace;
-            font-size: 0.95rem;
-            background: #eef2ff;
-            padding: 8px 14px;
-            border-radius: 40px;
-            margin-top: 8px;
-            word-break: break-all;
-            max-width: 100%;
-            display: inline-block;
-        }
-        .feed-nav-hint {
-            margin-top: 12px;
-            color: #73879a;
-            font-size: 0.8rem;
-            background: #f1f5f9;
-            padding: 6px 14px;
-            border-radius: 30px;
-            display: inline-block;
-        }
-        .feed-empty {
-            color: #73879a;
-            font-size: 1rem;
-            text-align: center;
-            padding: 20px;
-        }
-
-        /* Кнопки навигации в ленте для мобильных */
-        .feed-controls {
-            display: flex;
-            gap: 12px;
-            margin-top: 14px;
-            justify-content: center;
-            align-items: center;
-        }
-        .feed-controls button {
-            padding: 12px 20px;
-            min-height: 48px;
-            min-width: 60px;
-            border-radius: 50%;
-            font-size: 1.3rem;
-        }
-        .feed-controls button:disabled {
-            opacity: 0.3;
-        }
-
-        /* ===== ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМОВ ===== */
-        .view-toggle {
-            display: flex;
-            gap: 6px;
-            background: #eef2ff;
-            padding: 4px;
-            border-radius: 60px;
-            align-items: center;
-            flex: 1;
-            min-width: 100%;
-        }
-        .view-toggle button {
-            flex: 1;
-            background: transparent;
-            color: #2c3e66;
-            box-shadow: none;
-            padding: 10px 12px;
-            font-size: 0.85rem;
-            border-radius: 40px;
-            border: 2px solid transparent;
-            min-height: 44px;
-        }
-        .view-toggle button.active {
-            background: white;
-            border-color: #0f6b8c;
-            color: #0a4e6b;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        }
-        .view-toggle button:active {
-            transform: none;
-        }
-
-        .footer-buttons {
-            display: flex;
-            gap: 8px;
-            justify-content: stretch;
-            margin-top: 14px;
-            flex-wrap: wrap;
-        }
-        .footer-buttons button {
-            flex: 1;
-            min-width: 140px;
-        }
-        hr {
-            margin: 14px 0;
-            border-color: #e2e8f0;
-            border-style: solid;
-            border-width: 1px 0 0 0;
-        }
-        .badge {
-            background: #dbeafe;
-            padding: 8px 14px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            display: block;
-            text-align: center;
-            line-height: 1.4;
-        }
-        .format-selector {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            background: #eef2ff;
-            padding: 10px 14px;
-            border-radius: 14px;
-            flex-wrap: wrap;
-            width: 100%;
-        }
-        .format-option {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            min-height: 44px;
-            flex: 1;
-        }
-        input[type="radio"] {
-            width: 22px;
-            height: 22px;
-            margin: 0;
-            accent-color: #0f6b8c;
-        }
-        .hidden {
-            display: none !important;
-        }
-
-        /* Управление видимостью режимов */
-        .view-grid .barcode-grid { display: grid; }
-        .view-grid .barcode-feed { display: none; }
-        .view-feed .barcode-grid { display: none; }
-        .view-feed .barcode-feed { display: flex; }
-
-        .container-view {
-            transition: 0.15s;
-        }
-
-        /* Планшеты и большие телефоны */
-        @media (min-width: 600px) {
-            body { padding: 16px; }
-            .container { padding: 20px; border-radius: 18px; }
-            h1 { font-size: 1.4rem; }
-            .input-group { min-width: 150px; }
-            .barcode-grid {
-                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-                gap: 14px;
-            }
-            .format-selector { width: auto; }
-            .view-toggle { min-width: auto; flex: 0 1 auto; }
-            .view-toggle button { flex: 0 1 auto; }
-            .feed-item img { max-height: 55vh; }
-        }
-
-        /* Маленькие телефоны */
-        @media (max-width: 380px) {
-            .barcode-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-            .code-value { font-size: 0.6rem; }
-            h1 { font-size: 1.05rem; }
-        }
-    </style>
-    <!-- БИБЛИОТЕКИ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор кодов — Этикетки OZON</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Golos Text', sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1300px; margin: 0 auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        h1 { color: #0a5e7e; margin-bottom: 20px; }
+        .toolbar { background: #f8f9fc; border-radius: 16px; padding: 20px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
+        .flex-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; align-items: flex-end; }
+        .input-group { flex: 1; min-width: 150px; }
+        label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; color: #2c3e66; }
+        textarea, input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; font-family: 'Golos Text', sans-serif; background: white; }
+        textarea { font-family: 'Courier New', monospace; min-height: 120px; }
+        button { background: #0f6b8c; color: white; border: none; padding: 10px 24px; border-radius: 40px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: 0.2s; font-family: 'Golos Text', sans-serif; }
+        button:hover { background: #0a4e6b; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        .btn-secondary { background: #4a5b6e; }
+        .btn-warning { background: #b91c1c; }
+        .main-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+        .main-tabs button { background: transparent; color: #2c3e66; border-radius: 12px 12px 0 0; padding: 10px 22px; border: 2px solid transparent; border-bottom: none; font-size: 1rem; }
+        .main-tabs button.active { background: white; border-color: #0f6b8c; color: #0a4e6b; font-weight: bold; }
+        .hidden { display: none !important; }
+        .footer-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+    </style>
 </head>
 <body>
-<div class="container container-view" id="appContainer">
-    <h1>📦 Генератор кодов <span>QR / Code128</span></h1>
-    <div class="toolbar">
-        <div class="flex-row">
-            <div class="input-group">
-                <label>📝 Список значений (каждое с новой строки)</label>
-                <textarea id="barcodeList" placeholder="Введите значения, по одному на строку..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
-            </div>
-        </div>
-        <div class="flex-row">
-            <div class="format-selector">
-                <span style="font-weight:600; font-size:0.85rem;">🎯 Формат:</span>
-                <label class="format-option">
-                    <input type="radio" name="codeType" value="qr" checked> 🟢 QR-код
-                </label>
-                <label class="format-option">
-                    <input type="radio" name="codeType" value="code128"> 📊 Code 128
-                </label>
-            </div>
-        </div>
-        <div class="flex-row">
-            <div class="input-group">
-                <label>📏 Размер (px)</label>
-                <input type="number" id="sizeInput" value="150" step="10" min="80" inputmode="numeric">
-            </div>
-            <div class="input-group" id="widthGroup" style="display:none;">
-                <label>🔤 Ширина линии</label>
-                <input type="number" id="widthInput" value="2" step="0.5" min="0.8" inputmode="decimal">
-            </div>
-            <div class="input-group" id="textGroup" style="display:none;">
-                <label>📄 Текст под штрихкодом</label>
-                <select id="displayText">
-                    <option value="true">Да</option>
-                    <option value="false">Нет</option>
-                </select>
-            </div>
-        </div>
-        <div class="flex-row">
-            <button id="generateBtn" style="flex:1;">✨ Сгенерировать</button>
-        </div>
-        <div class="flex-row" style="justify-content:space-between; align-items:center;">
-            <div class="view-toggle">
-                <button id="viewGridBtn" class="active">📐 Сетка</button>
-                <button id="viewFeedBtn">📜 Лента</button>
-            </div>
-        </div>
+<div class="container">
+    <h1>📦 Генератор кодов — Этикетки OZON</h1>
+    <div class="main-tabs">
+        <button id="tabMain" class="active">🔳 Обычные коды</button>
+        <button id="tabLabels">🖨️ Этикетки OZON (A4)</button>
     </div>
 
-    <div class="stats" id="statsPanel" style="display: none;">
-        <span>🔢 Всего: <strong id="totalCount">0</strong></span>
-        <span>⚡ Тип: <strong id="currentTypeLabel">QR-код</strong></span>
-        <span id="feedPositionDisplay" style="display:none;">📍 <span id="feedPosNum">1</span> / <span id="feedTotalNum">0</span></span>
+    <div id="panelMain">
+        <div class="toolbar">
+            <div class="flex-row">
+                <div class="input-group" style="flex:2;">
+                    <label>📝 Список значений (каждое с новой строки)</label>
+                    <textarea id="barcodeList" placeholder="Введите значения..."></textarea>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="input-group" style="max-width:200px;">
+                    <label>📏 Размер QR (px)</label>
+                    <input type="number" id="sizeInput" value="150" step="10" min="80">
+                </div>
+                <div><button id="generateBtn">✨ СГЕНЕРИРОВАТЬ QR</button></div>
+            </div>
+        </div>
+        <div id="gridContainer" style="display:flex; flex-wrap:wrap; gap:15px; margin-top:20px;"></div>
     </div>
 
-    <!-- СЕТКА -->
-    <div id="gridContainer" class="barcode-grid">
-        <div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:#73879a;">⬅️ Введите данные и нажмите «Сгенерировать»</div>
+    <div id="panelLabels" class="hidden">
+        <div class="toolbar">
+            <div class="flex-row">
+                <div class="input-group" style="flex:2;">
+                    <label>📋 Список кодов (формат: <code>10_цифр-текст</code>)</label>
+                    <textarea id="labelCodesList" placeholder="0123456789-0018-&#10;9876543210-ABC-123" style="min-height:120px;"></textarea>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>🏷️ Текст по умолчанию</label>
+                    <input type="text" id="labelDefaultText" value="ХИМКИ_235">
+                </div>
+                <div class="input-group">
+                    <label>📏 DPI</label>
+                    <select id="labelDpi">
+                        <option value="203">203</option>
+                        <option value="300" selected>300</option>
+                        <option value="600">600</option>
+                    </select>
+                </div>
+                <div><button id="generateLabelsBtn">✨ Сгенерировать PDF</button></div>
+            </div>
+        </div>
     </div>
-
-    <!-- ЛЕНТА (один код за раз) -->
-    <div id="feedContainer" class="barcode-feed">
-        <div class="feed-empty">🔍 Нет данных. Сгенерируйте коды и переключитесь в режим «Лента».</div>
-    </div>
-
-    <div class="footer-buttons">
-        <button id="downloadZipBtn" class="btn-secondary" disabled>📦 Скачать ZIP</button>
-        <button id="clearBtn" class="btn-warning">🗑️ Очистить</button>
-    </div>
-    <hr>
-    <div class="badge">⚡ Свайп в ленте или стрелки клавиатуры для навигации</div>
 </div>
 
 <script>
-    (function() {
-        // ===== DOM =====
-        const textarea = document.getElementById('barcodeList');
-        const generateBtn = document.getElementById('generateBtn');
-        const gridContainer = document.getElementById('gridContainer');
-        const feedContainer = document.getElementById('feedContainer');
-        const statsPanel = document.getElementById('statsPanel');
-        const totalCountSpan = document.getElementById('totalCount');
-        const downloadZipBtn = document.getElementById('downloadZipBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const currentTypeLabel = document.getElementById('currentTypeLabel');
-        const feedPosDisplay = document.getElementById('feedPositionDisplay');
-        const feedPosNum = document.getElementById('feedPosNum');
-        const feedTotalNum = document.getElementById('feedTotalNum');
-        const appContainer = document.getElementById('appContainer');
+// =====================================================================
+// ===== СЮДА ВСТАВЬ БЛОК digitImages ИЗ СООБЩЕНИЯ 2 =====
+// =====================================================================
+const digitImages = {
+    '0': 'digits/0.png',
+    '1': 'digits/1.png',
+    '2': 'digits/2.png',
+    '3': 'digits/3.png',
+    '4': 'digits/4.png',
+    '5': 'digits/5.png',
+    '6': 'digits/6.png',
+    '7': 'digits/7.png',
+    '8': 'digits/8.png',
+    '9': 'digits/9.png',
+    '-': 'digits/dash.png'
+};
+// =====================================================================
+// ===== ЗАГРУЗКА ВСЕХ КАРТИНОК ПЕРЕД ГЕНЕРАЦИЕЙ =====
+// =====================================================================
+const loadedImages = {};
+let imagesLoaded = false;
 
-        // Кнопки переключения режимов
-        const viewGridBtn = document.getElementById('viewGridBtn');
-        const viewFeedBtn = document.getElementById('viewFeedBtn');
-
-        // Форматы
-        const qrRadio = document.querySelector('input[value="qr"]');
-        const code128Radio = document.querySelector('input[value="code128"]');
-        const sizeInput = document.getElementById('sizeInput');
-        const widthInput = document.getElementById('widthInput');
-        const displayText = document.getElementById('displayText');
-        const widthGroup = document.getElementById('widthGroup');
-        const textGroup = document.getElementById('textGroup');
-
-        // ===== Состояние =====
-        let currentBarcodes = [];
-        let currentFormat = 'qr';
-        let currentView = 'grid';
-        let feedIndex = 0;
-
-        // ===== Переключение формата =====
-        function onFormatChange() {
-            if (qrRadio.checked) {
-                currentFormat = 'qr';
-                currentTypeLabel.innerText = 'QR-код';
-                widthGroup.style.display = 'none';
-                textGroup.style.display = 'none';
-            } else {
-                currentFormat = 'code128';
-                currentTypeLabel.innerText = 'Code 128';
-                widthGroup.style.display = 'block';
-                textGroup.style.display = 'block';
-            }
-        }
-        qrRadio.addEventListener('change', onFormatChange);
-        code128Radio.addEventListener('change', onFormatChange);
-        onFormatChange();
-
-        // ===== Переключение режимов просмотра =====
-        function setView(mode) {
-            currentView = mode;
-            if (mode === 'grid') {
-                appContainer.classList.remove('view-feed');
-                appContainer.classList.add('view-grid');
-                viewGridBtn.classList.add('active');
-                viewFeedBtn.classList.remove('active');
-                feedPosDisplay.style.display = 'none';
-                renderGrid(currentBarcodes);
-            } else {
-                appContainer.classList.remove('view-grid');
-                appContainer.classList.add('view-feed');
-                viewFeedBtn.classList.add('active');
-                viewGridBtn.classList.remove('active');
-                feedPosDisplay.style.display = 'inline-block';
-                renderFeed(currentBarcodes, feedIndex);
-            }
-        }
-
-        viewGridBtn.addEventListener('click', () => setView('grid'));
-        viewFeedBtn.addEventListener('click', () => {
-            if (currentBarcodes.length === 0) {
-                alert('⚠️ Сначала сгенерируйте коды!');
-                return;
-            }
-            setView('feed');
+function preloadImages() {
+    return new Promise((resolve) => {
+        let count = 0;
+        const keys = Object.keys(digitImages);
+        keys.forEach(key => {
+            const img = new Image();
+            img.onload = () => {
+                loadedImages[key] = img;
+                count++;
+                if (count === keys.length) { imagesLoaded = true; resolve(); }
+            };
+            img.onerror = () => {
+                count++;
+                if (count === keys.length) { imagesLoaded = true; resolve(); }
+            };
+            img.src = digitImages[key];
         });
+    });
+}
 
-        // ===== Клавиши клавиатуры для ленты =====
-        document.addEventListener('keydown', (e) => {
-            if (currentView !== 'feed' || currentBarcodes.length === 0) return;
-            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                e.preventDefault();
-                if (feedIndex < currentBarcodes.length - 1) {
-                    feedIndex++;
-                    renderFeed(currentBarcodes, feedIndex);
-                }
-            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                e.preventDefault();
-                if (feedIndex > 0) {
-                    feedIndex--;
-                    renderFeed(currentBarcodes, feedIndex);
-                }
-            }
-        });
+// =====================================================================
+// ===== ОСТАЛЬНАЯ ЛОГИКА =====
+// =====================================================================
+const tabMain = document.getElementById('tabMain');
+const tabLabels = document.getElementById('tabLabels');
+const panelMain = document.getElementById('panelMain');
+const panelLabels = document.getElementById('panelLabels');
+const barcodeList = document.getElementById('barcodeList');
+const generateBtn = document.getElementById('generateBtn');
+const sizeInput = document.getElementById('sizeInput');
+const gridContainer = document.getElementById('gridContainer');
+const labelCodesList = document.getElementById('labelCodesList');
+const labelDefaultText = document.getElementById('labelDefaultText');
+const labelDpi = document.getElementById('labelDpi');
+const generateLabelsBtn = document.getElementById('generateLabelsBtn');
 
-        // ===== Свайпы в ленте =====
-        let touchStartY = 0;
-        let touchEndY = 0;
-        const SWIPE_THRESHOLD = 50;
+tabMain.addEventListener('click', () => {
+    tabMain.classList.add('active');
+    tabLabels.classList.remove('active');
+    panelMain.classList.remove('hidden');
+    panelLabels.classList.add('hidden');
+});
+tabLabels.addEventListener('click', () => {
+    tabLabels.classList.add('active');
+    tabMain.classList.remove('active');
+    panelLabels.classList.remove('hidden');
+    panelMain.classList.add('hidden');
+});
 
-        feedContainer.addEventListener('touchstart', (e) => {
-            if (currentView !== 'feed' || currentBarcodes.length === 0) return;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
+const mmToPx = (mm, dpi) => Math.round(mm * dpi / 25.4);
 
-        feedContainer.addEventListener('touchend', (e) => {
-            if (currentView !== 'feed' || currentBarcodes.length === 0) return;
-            touchEndY = e.changedTouches[0].screenY;
-            const diff = touchStartY - touchEndY;
-            if (Math.abs(diff) > SWIPE_THRESHOLD) {
-                if (diff > 0 && feedIndex < currentBarcodes.length - 1) {
-                    feedIndex++;
-                } else if (diff < 0 && feedIndex > 0) {
-                    feedIndex--;
-                }
-                renderFeed(currentBarcodes, feedIndex);
-            }
-        }, { passive: true });
-
-        // ===== Генерация QR =====
-        function generateQRCode(value, size) {
-            return new Promise((resolve) => {
-                if (!value || value.trim() === '') { resolve(null); return; }
-                const tempDiv = document.createElement('div');
-                tempDiv.style.width = size + 'px';
-                tempDiv.style.height = size + 'px';
-                try {
-                    new QRCode(tempDiv, {
-                        text: value.trim(),
-                        width: parseInt(size),
-                        height: parseInt(size),
-                        colorDark: '#000000',
-                        colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.M
-                    });
-                    setTimeout(() => {
-                        const canvas = tempDiv.querySelector('canvas');
-                        if (canvas) {
-                            resolve({ value: value.trim(), dataUrl: canvas.toDataURL('image/png') });
-                        } else {
-                            const img = tempDiv.querySelector('img');
-                            if (img && img.src) resolve({ value: value.trim(), dataUrl: img.src });
-                            else resolve(null);
-                        }
-                    }, 30);
-                } catch(e) { resolve(null); }
-            });
+function invertImage(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        if (data[i] < 128) {
+            data[i] = 255; data[i+1] = 255; data[i+2] = 255;
         }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas;
+}
 
-        // ===== Генерация Code128 =====
-        function generateCode128(value, widthModule, height, showText) {
-            return new Promise((resolve) => {
-                if (!value || value.trim() === '') { resolve(null); return; }
-                const canvas = document.createElement('canvas');
-                try {
-                    JsBarcode(canvas, value.trim(), {
-                        format: 'CODE128',
-                        width: parseFloat(widthModule),
-                        height: parseInt(height, 10),
-                        displayValue: showText === 'true',
-                        fontSize: 14,
-                        margin: 8,
-                        background: '#ffffff',
-                        lineColor: '#000000'
-                    });
-                    setTimeout(() => {
-                        resolve({ value: value.trim(), dataUrl: canvas.toDataURL('image/png') });
-                    }, 10);
-                } catch(e) { resolve(null); }
-            });
-        }
-
-        // ===== ГЛАВНАЯ ГЕНЕРАЦИЯ =====
-        async function generateAll() {
-            const rawLines = textarea.value.split(/\r?\n/);
-            const codesList = rawLines.filter(line => line.trim().length > 0);
-            if (codesList.length === 0) {
-                alert('❌ Введите хотя бы один код!');
-                return;
-            }
-            if (codesList.length > 1200 && !confirm(`Вы генерируете ${codesList.length} кодов. Продолжить?`)) {
-                return;
-            }
-
-            gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">⏳ Генерация ${codesList.length} кодов...</div>`;
-            feedContainer.innerHTML = `<div class="feed-empty">⏳ Генерируем...</div>`;
-            currentBarcodes = [];
-
-            const sizeVal = parseInt(sizeInput.value, 10);
-            const results = [];
-
-            if (currentFormat === 'qr') {
-                for (let i = 0; i < codesList.length; i++) {
-                    const res = await generateQRCode(codesList[i], sizeVal);
-                    if (res) results.push(res);
-                    if (i % 30 === 0 && i > 0) {
-                        gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">🔄 ${i} / ${codesList.length}...</div>`;
-                    }
-                }
+function drawImageString(ctx, str, x, y, size, spacing, isInverted = false) {
+    let currentX = x;
+    for (let char of str) {
+        const img = loadedImages[char];
+        if (img) {
+            if (isInverted) {
+                const invCanvas = invertImage(img);
+                ctx.drawImage(invCanvas, currentX, y, size, size);
             } else {
-                const widthVal = widthInput.value;
-                const heightVal = sizeVal;
-                const showTextVal = displayText.value;
-                for (let i = 0; i < codesList.length; i++) {
-                    const res = await generateCode128(codesList[i], widthVal, heightVal, showTextVal);
-                    if (res) results.push(res);
-                    if (i % 30 === 0 && i > 0) {
-                        gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">🔄 ${i} / ${codesList.length}...</div>`;
-                    }
+                ctx.drawImage(img, currentX, y, size, size);
+            }
+            currentX += size + spacing;
+        }
+    }
+    return currentX;
+}
+
+function measureImageString(str, size, spacing) {
+    return str.length * (size + spacing) - spacing;
+}
+
+function generateQR(value, size) {
+    return new Promise((resolve) => {
+        const tempDiv = document.createElement('div');
+        try {
+            new QRCode(tempDiv, {
+                text: value, width: size, height: size,
+                colorDark: '#000000', colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            setTimeout(() => {
+                const canvas = tempDiv.querySelector('canvas');
+                if (canvas) resolve(canvas);
+                else {
+                    const img = tempDiv.querySelector('img');
+                    if (img && img.src) {
+                        const c = document.createElement('canvas');
+                        c.width = size; c.height = size;
+                        c.getContext('2d').drawImage(img, 0, 0, size, size);
+                        resolve(c);
+                    } else resolve(null);
                 }
-            }
+            }, 30);
+        } catch(e) { resolve(null); }
+    });
+}
 
-            currentBarcodes = results;
-            feedIndex = 0;
-
-            totalCountSpan.innerText = results.length;
-            statsPanel.style.display = 'flex';
-            downloadZipBtn.disabled = (results.length === 0);
-            feedTotalNum.innerText = results.length;
-
-            if (currentView === 'grid') {
-                renderGrid(results);
-            } else {
-                renderFeed(results, 0);
-            }
+generateBtn.addEventListener('click', async () => {
+    if (!imagesLoaded) await preloadImages();
+    const raw = barcodeList.value.split(/\r?\n/).filter(l => l.trim());
+    if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
+    
+    gridContainer.innerHTML = '';
+    const sizeVal = parseInt(sizeInput.value, 10);
+    
+    for (let val of raw) {
+        const qrCanvas = await generateQR(val, sizeVal);
+        if (qrCanvas) {
+            const card = document.createElement('div');
+            card.style.cssText = 'display:inline-block; margin:5px; text-align:center; background:white; padding:10px; border-radius:8px; border:1px solid #ddd;';
+            card.appendChild(qrCanvas);
+            const textDiv = document.createElement('div');
+            textDiv.innerText = val;
+            textDiv.style.cssText = 'font-size:10px; margin-top:5px; word-break:break-all;';
+            card.appendChild(textDiv);
+            gridContainer.appendChild(card);
         }
+    }
+});
 
-        // ===== ОТРИСОВКА СЕТКИ =====
-        function renderGrid(barcodes) {
-            gridContainer.innerHTML = '';
-            if (!barcodes || barcodes.length === 0) {
-                gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:#73879a;">🔍 Нет кодов для отображения</div>`;
-                return;
-            }
-            for (let item of barcodes) {
-                const card = document.createElement('div');
-                card.className = 'barcode-card';
-                const img = document.createElement('img');
-                img.src = item.dataUrl;
-                img.alt = item.value;
-                const span = document.createElement('div');
-                span.className = 'code-value';
-                span.innerText = item.value.length > 45 ? item.value.slice(0,42)+'...' : item.value;
-                card.appendChild(img);
-                card.appendChild(span);
-                gridContainer.appendChild(card);
-            }
+async function drawLabel(ctx, pos, labelW, labelH, codeData, defaultText, dpi) {
+    if (!imagesLoaded) await preloadImages();
+    const qrValue = codeData.qr;
+
+    // Рамка
+    ctx.save();
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = Math.max(1, mmToPx(0.3, dpi));
+    ctx.setLineDash([mmToPx(2, dpi), mmToPx(1.5, dpi)]);
+    ctx.strokeRect(pos.x + mmToPx(1, dpi), pos.y + mmToPx(1, dpi), labelW - mmToPx(2, dpi), labelH - mmToPx(2, dpi));
+    ctx.restore();
+
+    // QR
+    const qrSize = mmToPx(40, dpi);
+    const qrCanvas = await generateQR(qrValue, qrSize);
+    if (qrCanvas) {
+        ctx.drawImage(qrCanvas, pos.x + (labelW - qrSize) / 2, pos.y + mmToPx(5, dpi));
+    }
+
+    // Текст по умолчанию
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.font = `600 ${mmToPx(5.5, dpi)}px 'Golos Text', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(defaultText || 'ХИМКИ_235', pos.x + labelW / 2, pos.y + mmToPx(50, dpi));
+    ctx.restore();
+
+    // Основной код (картинками)
+    ctx.save();
+    const firstDashIndex = qrValue.indexOf('-');
+    let line1 = qrValue;
+    let line2 = '';
+    if (firstDashIndex !== -1) {
+        line1 = qrValue.substring(0, firstDashIndex).trim();
+        line2 = qrValue.substring(firstDashIndex).trim();
+    }
+
+    let prefixPart = line1;
+    let last4Part = '';
+    if (line1.length === 10) {
+        prefixPart = line1.substring(0, 6);
+        last4Part = line1.substring(6);
+    } else if (line1.length > 4) {
+        prefixPart = line1.slice(0, -4);
+        last4Part = line1.slice(-4);
+    }
+
+    const digitSize = mmToPx(10, dpi);
+    const spacing = mmToPx(0.5, dpi);
+
+    const prefixWidth = measureImageString(prefixPart, digitSize, spacing);
+    const last4Width = measureImageString(last4Part, digitSize, spacing);
+    const fullWidth = prefixWidth + last4Width + (prefixPart && last4Part ? spacing : 0);
+
+    const startX = pos.x + (labelW - fullWidth) / 2;
+    const line1Y = pos.y + mmToPx(62, dpi);
+
+    // Подложка
+    if (last4Part) {
+        const bgPadX = mmToPx(0.5, dpi);
+        const bgPadY = mmToPx(0.5, dpi);
+        const radius = mmToPx(1, dpi);
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(startX + prefixWidth + (prefixPart?spacing:0) - bgPadX, line1Y - bgPadY, last4Width + bgPadX*2, digitSize + bgPadY*2, radius);
+        } else {
+            ctx.rect(startX + prefixWidth + (prefixPart?spacing:0) - bgPadX, line1Y - bgPadY, last4Width + bgPadX*2, digitSize + bgPadY*2);
         }
+        ctx.fill();
+    }
 
-        // ===== ОТРИСОВКА ЛЕНТЫ =====
-        function renderFeed(barcodes, index) {
-            if (!barcodes || barcodes.length === 0) {
-                feedContainer.innerHTML = `<div class="feed-empty">🔍 Нет данных.</div>`;
-                return;
-            }
-            if (index < 0) index = 0;
-            if (index >= barcodes.length) index = barcodes.length - 1;
-            feedIndex = index;
+    // Рисуем префикс
+    if (prefixPart) {
+        drawImageString(ctx, prefixPart, startX, line1Y, digitSize, spacing, false);
+    }
+    // Рисуем подложку (инвертированные)
+    if (last4Part) {
+        drawImageString(ctx, last4Part, startX + prefixWidth + (prefixPart?spacing:0), line1Y, digitSize, spacing, true);
+    }
 
-            const item = barcodes[index];
-            const isFirst = index === 0;
-            const isLast = index === barcodes.length - 1;
+    // Вторая строка
+    if (line2) {
+        const line2Width = measureImageString(line2, digitSize * 0.8, spacing);
+        const line2X = pos.x + (labelW - line2Width) / 2;
+        const line2Y = line1Y + digitSize + mmToPx(4, dpi);
+        drawImageString(ctx, line2, line2X, line2Y, digitSize * 0.8, spacing, false);
+    }
 
-            feedContainer.innerHTML = `
-                <div class="feed-item">
-                    <img src="${item.dataUrl}" alt="Код ${index+1}" />
-                    <div class="feed-counter">${index+1} / ${barcodes.length}</div>
-                    <div class="feed-value">${item.value}</div>
-                    <div class="feed-controls">
-                        <button id="feedPrevBtn" ${isFirst ? 'disabled' : ''} aria-label="Предыдущий">▲</button>
-                        <button id="feedNextBtn" ${isLast ? 'disabled' : ''} aria-label="Следующий">▼</button>
-                    </div>
-                    <div class="feed-nav-hint">Свайп вверх/вниз или стрелки</div>
-                </div>
-            `;
-            feedPosNum.innerText = index+1;
-            feedTotalNum.innerText = barcodes.length;
+    ctx.restore();
+}
 
-            const prevBtn = document.getElementById('feedPrevBtn');
-            const nextBtn = document.getElementById('feedNextBtn');
-            if (prevBtn) prevBtn.addEventListener('click', () => {
-                if (feedIndex > 0) renderFeed(currentBarcodes, feedIndex - 1);
-            });
-            if (nextBtn) nextBtn.addEventListener('click', () => {
-                if (feedIndex < currentBarcodes.length - 1) renderFeed(currentBarcodes, feedIndex + 1);
-            });
+async function renderSheetCanvas(codes, dpi) {
+    const pageW = mmToPx(210, dpi);
+    const pageH = mmToPx(297, dpi);
+    const labelW = mmToPx(75, dpi);
+    const labelH = mmToPx(120, dpi);
+    const margin = mmToPx(5, dpi);
+    const gap = mmToPx(3, dpi);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = pageW;
+    canvas.height = pageH;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, pageW, pageH);
+
+    const positions = [
+        { x: margin, y: margin },
+        { x: margin + labelW + gap, y: margin },
+        { x: margin, y: margin + labelH + gap },
+        { x: margin + labelW + gap, y: margin + labelH + gap }
+    ];
+
+    for (let i = 0; i < codes.length && i < 4; i++) {
+        await drawLabel(ctx, positions[i], labelW, labelH, codes[i], labelDefaultText.value, dpi);
+    }
+    return canvas;
+}
+
+generateLabelsBtn.addEventListener('click', async () => {
+    if (!imagesLoaded) await preloadImages();
+    const raw = labelCodesList.value.split(/\r?\n/).filter(l => l.trim());
+    if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
+
+    const codes = raw.map(line => {
+        const parts = line.split(';').map(s => s.trim());
+        return { qr: parts[0], bottom: parts.length > 1 ? parts[1] : '' };
+    });
+
+    const dpi = parseInt(labelDpi.value, 10);
+    const sheets = [];
+    for (let i = 0; i < codes.length; i += 4) sheets.push(codes.slice(i, i + 4));
+
+    generateLabelsBtn.disabled = true;
+    generateLabelsBtn.textContent = '⏳ Генерация...';
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        for (let s = 0; s < sheets.length; s++) {
+            const canvas = await renderSheetCanvas(sheets[s], dpi);
+            const imgData = canvas.toDataURL('image/png');
+            if (s > 0) pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
         }
+        pdf.save(`ozon_labels_${dpi}dpi.pdf`);
+    } catch (err) {
+        alert('Ошибка при генерации PDF: ' + err.message);
+    } finally {
+        generateLabelsBtn.disabled = false;
+        generateLabelsBtn.textContent = '✨ Сгенерировать PDF';
+    }
+});
 
-        // ===== ОЧИСТКА =====
-        function clearAll() {
-            if (currentBarcodes.length > 0 && !confirm('Удалить все сгенерированные коды?')) return;
-            textarea.value = '';
-            currentBarcodes = [];
-            gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px 20px; color:#73879a;">⬅️ Введите данные и нажмите «Сгенерировать»</div>`;
-            feedContainer.innerHTML = `<div class="feed-empty">🔍 Нет данных.</div>`;
-            statsPanel.style.display = 'none';
-            downloadZipBtn.disabled = true;
-            feedIndex = 0;
-        }
-
-        // ===== СКАЧИВАНИЕ ZIP =====
-        function downloadAllAsZip() {
-            if (!currentBarcodes.length) {
-                alert('Нет данных. Сначала сгенерируйте коды.');
-                return;
-            }
-            const zip = new JSZip();
-            const folder = zip.folder(currentFormat === 'qr' ? 'qr_codes' : 'code128_barcodes');
-            for (let i = 0; i < currentBarcodes.length; i++) {
-                const b = currentBarcodes[i];
-                let safeName = b.value.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
-                if (!safeName) safeName = `code_${i+1}`;
-                const fileName = `${safeName}.png`;
-                const imageData = b.dataUrl.split(',')[1];
-                const blob = base64ToBlob(imageData, 'image/png');
-                folder.file(fileName, blob);
-            }
-            zip.generateAsync({ type: 'blob' }).then(content => {
-                const zipName = currentFormat === 'qr' ? 'qr_codes.zip' : 'code128_barcodes.zip';
-                saveAs(content, zipName);
-            }).catch(err => {
-                alert('Ошибка создания архива.');
-                console.error(err);
-            });
-        }
-
-        function base64ToBlob(base64, mimeType) {
-            const byteCharacters = atob(base64);
-            const byteArrays = [];
-            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                const slice = byteCharacters.slice(offset, offset + 512);
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-            return new Blob(byteArrays, { type: mimeType });
-        }
-
-        // ===== СОБЫТИЯ =====
-        generateBtn.addEventListener('click', generateAll);
-        downloadZipBtn.addEventListener('click', downloadAllAsZip);
-        clearBtn.addEventListener('click', clearAll);
-
-        // Инициализация: режим сетки
-        setView('grid');
-    })();
+// Инициализация
+preloadImages();
 </script>
 </body>
 </html>
