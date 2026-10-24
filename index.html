@@ -404,7 +404,7 @@
             justify-content: flex-end;
         }
 
-        /* ===== ЭКСТРАКТОР (Вкладка 4) ===== */
+                /* ===== ЭКСТРАКТОР ===== */
         .extractor-area {
             width: 100%;
             min-height: 300px;
@@ -448,6 +448,7 @@
             border: 1px solid #222;
             border-radius: 16px;
             padding: 20px;
+            position: relative;
         }
         .extractor-result h3 {
             font-size: 0.9rem;
@@ -460,35 +461,86 @@
             display: flex;
             gap: 20px;
             margin-bottom: 15px;
+            align-items: stretch;
+            position: relative;
+            width: 100%;
         }
+        
+        /* Статичная голубая линия (прицел) */
+        .highlight-line-static {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 28px; /* Высота подсветки */
+            top: 50%; /* По центру */
+            transform: translateY(-50%);
+            background: rgba(0, 212, 255, 0.2);
+            border-top: 2px solid var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+            pointer-events: none; /* Линия не мешает кликам */
+            z-index: 10;
+            box-shadow: 0 0 15px var(--border-blue-glow);
+        }
+
         .extractor-col {
-            flex: 1;
+            flex: 1 1 0; /* Жёстко делит ширину на 3 равные части */
+            min-width: 0; /* КРИТИЧЕСКИ ВАЖНО: запрещает контенту растягивать колонку */
             display: flex;
             flex-direction: column;
+            z-index: 2;
         }
         .extractor-col label {
             color: var(--accent-blue);
             margin-bottom: 8px;
+            background: #0a0a0a;
+            padding-bottom: 5px;
+            z-index: 3;
+            position: relative;
         }
         .extractor-list {
             flex: 1;
             max-height: 500px;
             overflow-y: auto;
+            overflow-x: hidden; /* Убираем горизонтальный скролл */
             background: #111;
             border: 1px solid #222;
             border-radius: 8px;
-            padding: 10px;
+            padding: 5px 0; /* Убираем боковые паддинги у контейнера */
             font-family: 'Courier New', monospace;
             font-size: 0.85rem;
-            white-space: pre-wrap;
-            word-break: break-all;
             color: var(--text-main);
             margin-bottom: 10px;
+            position: relative;
         }
+        
+        /* Стили строк: фиксированная высота и обрезка */
+        .extractor-list .row {
+            height: 32px; /* Увеличили высоту до 32px для комфортного чтения */
+            line-height: 32px; /* Центрирование текста по вертикали */
+            padding: 0 10px; /* Отступы по бокам */
+            white-space: nowrap; /* КРИТИЧЕСКИ ВАЖНО: запрет переноса */
+            overflow: hidden; /* Скрытие лишнего */
+            text-overflow: ellipsis; /* Троеточие в конце */
+            border-bottom: 1px solid #1a1a1a;
+            transition: background 0.1s;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .extractor-list .row:last-child {
+            border-bottom: none;
+        }
+        .extractor-list .row:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
         .extractor-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            justify-content: flex-end;
+            position: relative;
+            z-index: 2;
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -611,19 +663,27 @@
 
             <div id="extractorResult" class="extractor-result hidden">
                 <div class="extractor-columns">
+                    <!-- Статичная линия -->
+                    <div class="highlight-line-static"></div>
+
                     <div class="extractor-col">
-                        <label>Названия</label>
-                        <div class="extractor-list" id="extractorNames"></div>
-                        <button id="copyNamesBtn" class="btn-secondary">📋 Копировать названия</button>
+                        <label>ШК из названия</label>
+                        <div class="extractor-list" id="extractorSkus"></div>
+                        <button id="copySkusBtn" class="btn-secondary">📋 Копировать ШК</button>
                     </div>
                     <div class="extractor-col">
-                        <label>Номера отправлений</label>
+                        <label>Наименование (без ШК)</label>
+                        <div class="extractor-list" id="extractorNames"></div>
+                        <button id="copyNamesBtn" class="btn-secondary">📋 Копировать наименования</button>
+                    </div>
+                    <div class="extractor-col">
+                        <label>Номер отправления</label>
                         <div class="extractor-list" id="extractorNumbers"></div>
                         <button id="copyNumbersBtn" class="btn-secondary">📋 Копировать номера</button>
                     </div>
                 </div>
-                <div class="extractor-actions" style="justify-content: flex-end;">
-                    <button id="copyCombinedBtn">📋 Копировать всё (Название;Номер)</button>
+                <div class="extractor-actions">
+                    <button id="copyCombinedBtn">📋 Копировать всё (ШК;Название;Номер)</button>
                     <button id="clearExtractorBtn" class="btn-secondary">🗑️ Очистить</button>
                 </div>
             </div>
@@ -691,13 +751,16 @@ const mmToPx = (mm, dpi) => Math.round(mm * dpi / 25.4);
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const extractorResult = document.getElementById('extractorResult');
+const extractorSkus = document.getElementById('extractorSkus');
 const extractorNames = document.getElementById('extractorNames');
 const extractorNumbers = document.getElementById('extractorNumbers');
+const copySkusBtn = document.getElementById('copySkusBtn');
 const copyNamesBtn = document.getElementById('copyNamesBtn');
 const copyNumbersBtn = document.getElementById('copyNumbersBtn');
 const copyCombinedBtn = document.getElementById('copyCombinedBtn');
 const clearExtractorBtn = document.getElementById('clearExtractorBtn');
 
+let currentSkus = [];
 let currentNames = [];
 let currentNumbers = [];
 
@@ -722,6 +785,24 @@ dropZone.addEventListener('drop', (e) => {
     dropZone.classList.remove('dragover');
     if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
 });
+
+// Синхронный скролл
+let isSyncing = false;
+function syncScroll(source, targets) {
+    if (isSyncing) return;
+    isSyncing = true;
+    const scrollTop = source.scrollTop;
+    const scrollLeft = source.scrollLeft;
+    targets.forEach(target => {
+        target.scrollTop = scrollTop;
+        target.scrollLeft = scrollLeft;
+    });
+    requestAnimationFrame(() => { isSyncing = false; });
+}
+
+extractorSkus.addEventListener('scroll', () => syncScroll(extractorSkus, [extractorNames, extractorNumbers]));
+extractorNames.addEventListener('scroll', () => syncScroll(extractorNames, [extractorSkus, extractorNumbers]));
+extractorNumbers.addEventListener('scroll', () => syncScroll(extractorNumbers, [extractorSkus, extractorNames]));
 
 // Обработка файла
 function handleFile(file) {
@@ -760,40 +841,70 @@ function handleFile(file) {
                 }
             });
 
-            if (colNameIndex === -1) {
-                headers.forEach((header, index) => {
-                    if (header && typeof header === 'string' && header.toLowerCase().includes('название')) colNameIndex = index;
-                });
-            }
-            if (colNumberIndex === -1) {
-                headers.forEach((header, index) => {
-                    if (header && typeof header === 'string' && header.toLowerCase().includes('номер') && header.toLowerCase().includes('отправления')) colNumberIndex = index;
-                });
-            }
-
             if (colNameIndex === -1 || colNumberIndex === -1) {
                 alert('Не удалось найти колонки "Название" или "Номер отправления". Проверьте заголовки.');
                 return;
             }
 
+            currentSkus = [];
             currentNames = [];
             currentNumbers = [];
             
-            for (let i = headerRowIndex + 1; i < rows.length; i++) {
+            const skuRegexII = /^(ii\d+)/i;
+            const skuRegex301 = /^(%301%\d+)/i;
+
+                        for (let i = headerRowIndex + 1; i < rows.length; i++) {
                 const row = rows[i];
                 if (!row) continue;
                 
-                const name = row[colNameIndex] ? String(row[colNameIndex]).trim() : '';
+                const rawName = row[colNameIndex] ? String(row[colNameIndex]).trim() : '';
                 const number = row[colNumberIndex] ? String(row[colNumberIndex]).trim() : '';
                 
-                if (name && number) {
-                    const cleanName = name.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-                    const cleanNumber = number.replace(/\n/g, ' ').trim();
-                    
-                    if (cleanName && cleanNumber) {
-                        currentNames.push(cleanName);
-                        currentNumbers.push(cleanNumber);
+                if (rawName && number) {
+                    // Разбиваем ячейку на строки
+                    const lines = rawName.split('\n').map(l => l.trim()).filter(l => l);
+                    let sku = '';
+                    let cleanName = '';
+
+                    if (lines.length > 1) {
+                        const firstLine = lines[0];
+                        
+                        // 1. Проверяем, начинается ли первая строка с "ii" или "%301%"
+                        if (/^(ii\d+)/i.test(firstLine) || /^(%301%\d+)/i.test(firstLine)) {
+                            sku = firstLine;
+                            cleanName = lines.slice(1).join(' ');
+                        } 
+                        // 2. Проверяем, совпадает ли первая строка с номером отправления
+                        else if (firstLine === number || number.includes(firstLine) || firstLine.includes(number)) {
+                            sku = firstLine; // Считаем её ШК
+                            cleanName = lines.slice(1).join(' ');
+                        }
+                        // 3. Иначе — это просто название в несколько строк
+                        else {
+                            sku = '';
+                            cleanName = lines.join(' ');
+                        }
+                    } else {
+                        // Если строка одна
+                        if (/^(ii\d+)/i.test(lines[0]) || /^(%301%\d+)/i.test(lines[0])) {
+                            sku = lines[0];
+                            cleanName = '—';
+                        } else if (lines[0] === number || number.includes(lines[0]) || lines[0].includes(number)) {
+                            sku = lines[0];
+                            cleanName = '—';
+                        } else {
+                            sku = '';
+                            cleanName = lines[0];
+                        }
                     }
+
+                    // Очищаем от лишних пробелов
+                    cleanName = cleanName.replace(/\s+/g, ' ').trim();
+                    const cleanNumber = number.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                    
+                    currentSkus.push(sku || '—');
+                    currentNames.push(cleanName || '—');
+                    currentNumbers.push(cleanNumber);
                 }
             }
 
@@ -802,10 +913,13 @@ function handleFile(file) {
                 return;
             }
 
-            // Выводим в два поля
-            extractorNames.textContent = currentNames.join('\n');
-            extractorNumbers.textContent = currentNumbers.join('\n');
+            renderExtractorLists();
             extractorResult.classList.remove('hidden');
+
+            // Сброс скролла
+            extractorSkus.scrollTop = 0;
+            extractorNames.scrollTop = 0;
+            extractorNumbers.scrollTop = 0;
 
         } catch (err) {
             console.error(err);
@@ -815,44 +929,32 @@ function handleFile(file) {
     reader.readAsArrayBuffer(file);
 }
 
-// Копирование названий
-copyNamesBtn.addEventListener('click', () => {
-    if (currentNames.length === 0) return;
-    const text = currentNames.join('\n');
+// Рендер списков
+function renderExtractorLists() {
+    extractorSkus.innerHTML = '';
+    extractorNames.innerHTML = '';
+    extractorNumbers.innerHTML = '';
     
-    navigator.clipboard.writeText(text).then(() => {
-        copyNamesBtn.textContent = '✅ Скопировано!';
-        setTimeout(() => { copyNamesBtn.textContent = '📋 Копировать названия'; }, 2000);
-    }).catch(() => {
-        fallbackCopy(text, copyNamesBtn, '📋 Копировать названия');
+    currentSkus.forEach((sku, i) => {
+        const rowSku = document.createElement('div');
+        rowSku.className = 'row';
+        rowSku.textContent = sku;
+        rowSku.title = sku;
+        extractorSkus.appendChild(rowSku);
+        
+        const rowName = document.createElement('div');
+        rowName.className = 'row';
+        rowName.textContent = currentNames[i];
+        rowName.title = currentNames[i];
+        extractorNames.appendChild(rowName);
+        
+        const rowNum = document.createElement('div');
+        rowNum.className = 'row';
+        rowNum.textContent = currentNumbers[i];
+        rowNum.title = currentNumbers[i];
+        extractorNumbers.appendChild(rowNum);
     });
-});
-
-// Копирование номеров
-copyNumbersBtn.addEventListener('click', () => {
-    if (currentNumbers.length === 0) return;
-    const text = currentNumbers.join('\n');
-    
-    navigator.clipboard.writeText(text).then(() => {
-        copyNumbersBtn.textContent = '✅ Скопировано!';
-        setTimeout(() => { copyNumbersBtn.textContent = '📋 Копировать номера'; }, 2000);
-    }).catch(() => {
-        fallbackCopy(text, copyNumbersBtn, '📋 Копировать номера');
-    });
-});
-
-// Копирование комбинированно (Название;Номер)
-copyCombinedBtn.addEventListener('click', () => {
-    if (currentNames.length === 0) return;
-    const text = currentNames.map((name, i) => `${name};${currentNumbers[i]}`).join('\n');
-    
-    navigator.clipboard.writeText(text).then(() => {
-        copyCombinedBtn.textContent = '✅ Скопировано!';
-        setTimeout(() => { copyCombinedBtn.textContent = '📋 Копировать всё (Название;Номер)'; }, 2000);
-    }).catch(() => {
-        fallbackCopy(text, copyCombinedBtn, '📋 Копировать всё (Название;Номер)');
-    });
-});
+}
 
 // Фолбэк копирования
 function fallbackCopy(text, btn, originalText) {
@@ -866,15 +968,59 @@ function fallbackCopy(text, btn, originalText) {
     setTimeout(() => { btn.textContent = originalText; }, 2000);
 }
 
+// Копирование ШК
+copySkusBtn.addEventListener('click', () => {
+    if (currentSkus.length === 0) return;
+    const text = currentSkus.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        copySkusBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => { copySkusBtn.textContent = '📋 Копировать ШК'; }, 2000);
+    }).catch(() => fallbackCopy(text, copySkusBtn, '📋 Копировать ШК'));
+});
+
+// Копирование названий
+copyNamesBtn.addEventListener('click', () => {
+    if (currentNames.length === 0) return;
+    const text = currentNames.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        copyNamesBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => { copyNamesBtn.textContent = '📋 Копировать наименования'; }, 2000);
+    }).catch(() => fallbackCopy(text, copyNamesBtn, '📋 Копировать наименования'));
+});
+
+// Копирование номеров
+copyNumbersBtn.addEventListener('click', () => {
+    if (currentNumbers.length === 0) return;
+    const text = currentNumbers.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+        copyNumbersBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => { copyNumbersBtn.textContent = '📋 Копировать номера'; }, 2000);
+    }).catch(() => fallbackCopy(text, copyNumbersBtn, '📋 Копировать номера'));
+});
+
+// Копирование комбинированно
+copyCombinedBtn.addEventListener('click', () => {
+    if (currentNames.length === 0) return;
+    const text = currentSkus.map((sku, i) => `${sku};${currentNames[i]};${currentNumbers[i]}`).join('\n');
+    
+    navigator.clipboard.writeText(text).then(() => {
+        copyCombinedBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => { copyCombinedBtn.textContent = '📋 Копировать всё (ШК;Название;Номер)'; }, 2000);
+    }).catch(() => fallbackCopy(text, copyCombinedBtn, '📋 Копировать всё (ШК;Название;Номер)'));
+});
+
 // Очистка
 clearExtractorBtn.addEventListener('click', () => {
-    extractorNames.textContent = '';
-    extractorNumbers.textContent = '';
+    extractorSkus.innerHTML = '';
+    extractorNames.innerHTML = '';
+    extractorNumbers.innerHTML = '';
     extractorResult.classList.add('hidden');
     fileInput.value = '';
+    currentSkus = [];
     currentNames = [];
     currentNumbers = [];
 });
+
 
 // ============================================================
 // ===== ДАЛЕЕ ИДЕТ ВЕСЬ ОСТАЛЬНОЙ КОД ИЗ ТВОЕГО ФАЙЛА =====
