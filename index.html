@@ -3,50 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор кодов — Сетка / Лента / Этикетки</title>
-    
+    <title>Генератор кодов — Этикетки OZON</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- Библиотеки -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- SheetJS для чтения Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Golos Text', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            padding: 20px;
-            color: #1a1a1a;
+        
+        :root {
+            --bg-deep: #000000;
+            --bg-card: #0a0a0a;
+            --bg-input: #121212;
+            --text-main: #ffffff;
+            --text-dim: #888888;
+            --accent-green: #00ff41;
+            --accent-blue: #00d4ff;
+            --border-glow: rgba(0, 255, 65, 0.3);
+            --border-blue-glow: rgba(0, 212, 255, 0.3);
         }
+
+        body {
+            font-family: 'Onest', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-deep);
+            padding: 20px;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
         .container {
             max-width: 1300px;
             margin: 0 auto;
-            background: white;
+            background: var(--bg-card);
             border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 0, 0, 1);
             padding: 25px;
+            border: 1px solid #1a1a1a;
         }
+
         h1 {
-            font-size: 1.8rem;
-            color: #0a5e7e;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: #ffffff;
+            display: inline-block;
+            padding: 12px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.05);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
+
         .toolbar {
-            background: #f8f9fc;
+            background: #050505;
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 25px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #222;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.05);
         }
+
         .flex-row {
             display: flex;
             gap: 15px;
@@ -54,55 +80,158 @@
             margin-bottom: 15px;
             align-items: flex-end;
         }
+
         .input-group { flex: 1; min-width: 150px; }
+
         label {
             display: block;
             font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-            color: #2c3e66;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px var(--border-glow);
         }
+
         textarea, input, select {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 10px;
             font-size: 0.95rem;
-            font-family: 'Golos Text', monospace;
-            background: white;
-        }
-        textarea { font-family: 'Courier New', monospace; min-height: 120px; }
-        button {
-            background: #0f6b8c;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 40px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.9rem;
+            font-family: 'Onest', monospace;
+            background: var(--bg-input);
+            color: var(--text-main);
             transition: 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px var(--border-blue-glow);
+        }
+
+        textarea { font-family: 'Courier New', monospace; min-height: 120px; }
+
+        button {
+            background: transparent;
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px var(--border-glow), inset 0 0 10px rgba(0, 255, 65, 0.1);
             white-space: nowrap;
-            font-family: 'Golos Text', sans-serif;
+            font-family: 'Onest', sans-serif;
         }
-        button:hover { background: #0a4e6b; transform: translateY(-1px); }
-        button:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
-        .btn-secondary { background: #4a5b6e; }
-        .btn-secondary:hover { background: #2d3a48; }
-        .btn-warning { background: #b91c1c; }
-        .btn-warning:hover { background: #8b1515; }
-        .stats {
-            background: #eef2ff;
-            border-radius: 14px;
-            padding: 12px 18px;
-            margin-bottom: 20px;
-            font-weight: 500;
+
+        button:hover {
+            background: var(--accent-green);
+            color: #000;
+            box-shadow: 0 0 20px var(--border-glow), inset 0 0 20px rgba(0, 255, 65, 0.5);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            border-color: #333;
+            color: #333;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px var(--border-blue-glow), inset 0 0 10px rgba(0, 212, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--border-blue-glow), inset 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .main-tabs {
             display: flex;
-            gap: 20px;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 10px;
             flex-wrap: wrap;
-            align-items: center;
         }
+
+        .main-tabs button {
+            background: transparent;
+            border: 1px solid #222;
+            color: var(--text-dim);
+            box-shadow: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+        }
+
+        .main-tabs button.active {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            box-shadow: 0 0 10px var(--border-blue-glow);
+        }
+
+        .main-tabs button:hover:not(.active) {
+            border-color: #444;
+            color: #fff;
+        }
+
+        .hidden { display: none !important; }
+
+        .badge {
+            background: transparent;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-dim);
+            border: 1px solid #222;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .view-toggle span {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 5px;
+        }
+
+        .view-toggle button {
+            background: transparent;
+            border: 1px solid #222;
+            color: var(--text-dim);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+        }
+
+        .view-toggle button.active {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            box-shadow: 0 0 10px var(--border-glow);
+        }
+
         .barcode-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -110,827 +239,1333 @@
             margin-top: 20px;
             max-height: 70vh;
             overflow-y: auto;
-            padding: 5px;
-            background: #ffffff;
+            padding: 10px;
+            background: transparent;
             border-radius: 16px;
         }
+
         .barcode-card {
-            background: white;
-            border: 1px solid #e4e7eb;
+            background: #0a0a0a;
+            border: 1px solid #222;
             border-radius: 16px;
             padding: 16px 12px 12px 12px;
             text-align: center;
-            transition: 0.1s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            transition: 0.2s;
         }
-        .barcode-card:hover { border-color: #90b4ce; background: #fefefe; }
+
+        .barcode-card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px var(--border-blue-glow);
+        }
+
+        .barcode-card canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
         .code-value {
             margin-top: 12px;
             font-size: 0.7rem;
             font-family: monospace;
-            background: #f1f5f9;
+            background: #111;
             padding: 5px 8px;
             border-radius: 30px;
-            color: #0f172a;
+            color: var(--accent-green);
             word-break: break-all;
+            border: 1px solid #222;
         }
-        .barcode-feed {
-            margin-top: 20px;
-            background: #fafbfc;
-            border-radius: 16px;
-            border: 2px solid #e2e8f0;
-            min-height: 400px;
+
+        .feed-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 30px 20px;
-            position: relative;
-            transition: 0.3s;
-        }
-        .feed-item { text-align: center; max-width: 600px; width: 100%; }
-        .feed-item img {
-            max-width: 100%;
-            max-height: 500px;
-            background: white;
-            padding: 20px;
+            min-height: 60vh;
+            padding: 40px 20px;
+            border: 1px solid #222;
             border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            border: 1px solid #eef2f6;
+            background: #050505;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
         }
-        .feed-counter { font-size: 1.1rem; font-weight: 600; color: #2c3e66; margin-top: 20px; }
-        .feed-value {
-            font-family: monospace;
+
+        .feed-container canvas {
+            max-width: 100%;
+            max-height: 60vh;
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            background: #ffffff;
+            padding: 10px;
+        }
+
+        .feed-counter {
+            margin-top: 20px;
             font-size: 1.2rem;
-            background: #eef2ff;
+            color: var(--accent-green);
+            font-family: monospace;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--border-glow);
+        }
+
+        .feed-value {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: var(--text-main);
+            font-family: monospace;
+            background: #111;
             padding: 8px 20px;
-            border-radius: 40px;
-            margin-top: 12px;
+            border-radius: 30px;
+            border: 1px solid #222;
             word-break: break-all;
             max-width: 100%;
         }
-        .feed-nav-hint {
+
+        .feed-hint {
             margin-top: 20px;
-            color: #73879a;
-            font-size: 0.9rem;
-            background: #f1f5f9;
-            padding: 8px 18px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #222;
+            padding: 8px 16px;
             border-radius: 30px;
-            display: inline-block;
         }
-        .feed-empty { color: #73879a; font-size: 1.2rem; }
-        .view-toggle {
-            display: flex;
-            gap: 10px;
-            background: #eef2ff;
-            padding: 5px 8px;
-            border-radius: 60px;
-            align-items: center;
-        }
-        .view-toggle button {
-            background: transparent;
-            color: #2c3e66;
-            box-shadow: none;
-            padding: 6px 18px;
-            font-size: 0.85rem;
-            border-radius: 40px;
-            border: 2px solid transparent;
-        }
-        .view-toggle button.active {
-            background: white;
-            border-color: #0f6b8c;
-            color: #0a4e6b;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        }
-        .view-toggle button:hover { transform: none; background: rgba(255,255,255,0.5); }
-        .view-toggle button.active:hover { background: white; }
-        .main-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        .main-tabs button {
-            background: transparent;
-            color: #2c3e66;
-            box-shadow: none;
-            border-radius: 12px 12px 0 0;
-            padding: 10px 22px;
-            border: 2px solid transparent;
-            border-bottom: none;
-            font-size: 1rem;
-        }
-        .main-tabs button.active {
-            background: white;
-            border-color: #0f6b8c;
-            color: #0a4e6b;
+
+        .feed-hint span {
+            color: var(--accent-blue);
             font-weight: bold;
         }
-        .footer-buttons {
+
+        .preview-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(5px);
             display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 20px;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
         }
-        hr { margin: 20px 0; border-color: #e2e8f0; }
-        .badge {
-            background: #dbeafe;
-            padding: 5px 12px;
-            border-radius: 50px;
+
+        .preview-modal {
+            background: #050505;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 90vw;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+        }
+
+        .preview-modal h2 {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .preview-content {
+            overflow: auto;
+            max-height: calc(95vh - 200px);
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 10px;
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .preview-content img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #333;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        .preview-page-label {
             font-size: 0.8rem;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .format-selector {
+
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* ===== ЭКСТРАКТОР (Вкладка 4) ===== */
+        .extractor-area {
+            width: 100%;
+            min-height: 300px;
+            border: 2px dashed #333;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 20px;
+            background: #050505;
+        }
+        .extractor-area.dragover {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 65, 0.05);
+            box-shadow: 0 0 30px var(--border-glow);
+        }
+        .extractor-area svg {
+            width: 60px;
+            height: 60px;
+            fill: var(--accent-green);
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px var(--accent-green));
+        }
+        .extractor-area p {
+            color: var(--text-dim);
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .extractor-area .highlight {
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+        .extractor-result {
+            margin-top: 20px;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .extractor-result h3 {
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .extractor-columns {
             display: flex;
             gap: 20px;
-            align-items: center;
-            background: #eef2ff;
-            padding: 8px 15px;
-            border-radius: 60px;
+            margin-bottom: 15px;
+        }
+        .extractor-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .extractor-col label {
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+        .extractor-list {
+            flex: 1;
+            max-height: 500px;
+            overflow-y: auto;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+        .extractor-actions {
+            display: flex;
+            gap: 10px;
             flex-wrap: wrap;
         }
-        .format-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        input[type="radio"] { width: 18px; height: 18px; margin: 0; accent-color: #0f6b8c; }
-        .hidden { display: none !important; }
-        .view-grid .barcode-grid { display: grid; }
-        .view-grid .barcode-feed { display: none; }
-        .view-feed .barcode-grid { display: none; }
-        .view-feed .barcode-feed { display: flex; }
-        .container-view { transition: 0.2s; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
     </style>
 </head>
 <body>
-<div class="container container-view" id="appContainer">
-    <h1>📦 ГЕНЕРАТОР КОДОВ <span style="font-size:1rem;">QR / Code128 / Этикетки</span></h1>
-    
+<div class="container">
+    <h1>📦 Генератор этикеток</h1>
+
     <div class="main-tabs">
-        <button id="tabMain" class="active">🔳 Обычные коды</button>
+        <button id="tabMain" class="active">🔳 Обычные QR</button>
         <button id="tabLabels">🖨️ Этикетки OZON (A4)</button>
+        <button id="tabLabels58">📦 Этикетки OZON (58×40)</button>
+        <button id="tabExtractor">📊 Экстрактор</button>
     </div>
 
-    <div id="panelMain">
+    <!-- ВКЛАДКА 1: ОБЫЧНЫЕ QR -->
+    <div id="panelMain" class="panel">
         <div class="toolbar">
             <div class="flex-row">
                 <div class="input-group" style="flex:2;">
-                    <label>📝 Список значений (каждое с новой строки)</label>
-                    <textarea id="barcodeList" placeholder="Введите до 500+ значений, по одному на строку..."></textarea>
+                    <label>Список значений</label>
+                    <textarea id="barcodeList" placeholder="Введите значения..."></textarea>
                 </div>
             </div>
             <div class="flex-row">
-                <div class="format-selector">
-                    <span style="font-weight:600;">🎯 Формат:</span>
-                    <label class="format-option">
-                        <input type="radio" name="codeType" value="qr" checked> 🟢 QR-код
-                    </label>
-                    <label class="format-option">
-                        <input type="radio" name="codeType" value="code128"> 📊 Code 128
-                    </label>
-                </div>
-                <div class="input-group" id="sizeControl">
-                    <label>📏 Размер (px)</label>
+                <div class="input-group" style="max-width:200px;">
+                    <label>Размер QR (px)</label>
                     <input type="number" id="sizeInput" value="150" step="10" min="80">
                 </div>
-                <div id="barcodeOptions" style="display: none; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <div class="input-group" style="min-width:80px;">
-                        <label>🔤 Ширина линии</label>
-                        <input type="number" id="widthInput" value="2" step="0.5" min="0.8" style="width:70px;">
-                    </div>
-                    <div class="input-group" style="min-width:100px;">
-                        <label>📄 Текст</label>
-                        <select id="displayText">
-                            <option value="true">Да</option>
-                            <option value="false">Нет</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <button id="generateBtn">✨ СГЕНЕРИРОВАТЬ</button>
-                </div>
+                <div><button id="generateBtn">✨ Сгенерировать QR</button></div>
             </div>
-            <div class="flex-row" style="margin-bottom:0; justify-content:space-between; align-items:center;">
-                <div class="view-toggle">
-                    <span style="font-weight:600; margin-right:5px;">👁️ Режим:</span>
-                    <button id="viewGridBtn" class="active">📐 Сетка</button>
-                    <button id="viewFeedBtn">📜 Лента (1 код)</button>
-                </div>
-                <span style="font-size:0.85rem; color:#64748b;">⬇️⬆️ В ленте — стрелки клавиатуры</span>
+            
+            <div class="view-toggle">
+                <span>Режим:</span>
+                <button id="viewGridBtn" class="active">📐 Сетка</button>
+                <button id="viewFeedBtn">📜 Лента (1 код)</button>
             </div>
-        </div>
-
-        <div class="stats" id="statsPanel" style="display: none;">
-            <span>🔢 Всего: <strong id="totalCount">0</strong></span>
-            <span>⚡ Тип: <strong id="currentTypeLabel">QR-код</strong></span>
-            <span id="feedPositionDisplay" style="display:none;">📍 <span id="feedPosNum">1</span> / <span id="feedTotalNum">0</span></span>
-            <span>🖨️ Готово к скачиванию</span>
         </div>
 
         <div id="gridContainer" class="barcode-grid">
-            <div style="grid-column:1/-1; text-align:center; padding:40px; color:#73879a;">⬅️ Введите данные и нажмите «Сгенерировать»</div>
+            <div style="grid-column:1/-1; text-align:center; padding:40px; color:#555;">⬅️ Введите данные и нажмите «Сгенерировать»</div>
         </div>
-
-        <div id="feedContainer" class="barcode-feed">
-            <div class="feed-empty">🔍 Нет данных. Сгенерируйте коды и переключитесь в режим «Лента».</div>
-        </div>
-
-        <div class="footer-buttons">
-            <button id="downloadZipBtn" class="btn-secondary" disabled>📦 Скачать все (ZIP / PNG)</button>
-            <button id="clearBtn" class="btn-warning">🗑️ Очистить всё</button>
+        
+        <div id="feedContainer" class="feed-container hidden">
+            <div style="text-align:center; color:#555;">Нет данных</div>
         </div>
     </div>
 
-    <div id="panelLabels" class="hidden">
+    <!-- ВКЛАДКА 2: ЭТИКЕТКИ OZON A4 -->
+    <div id="panelLabels" class="panel hidden">
         <div class="toolbar">
             <div class="flex-row">
                 <div class="input-group" style="flex:2;">
-                    <label>📋 Список кодов (формат: <code>10_цифр-текст</code> или просто <code>код</code>)</label>
-                    <textarea id="labelCodesList" placeholder="0123456789-0018-&#10;9876543210-ABC-123&#10;0000000000" style="min-height:120px;"></textarea>
+                    <label>Список кодов (формат: 10_цифр-текст)</label>
+                    <textarea id="labelCodesList" placeholder="0123456789-0018-&#10;9876543210-ABC-123" style="min-height:120px;"></textarea>
                 </div>
             </div>
             <div class="flex-row">
                 <div class="input-group">
-                    <label>🏷️ Текст по умолчанию (под QR)</label>
-                    <input type="text" id="labelDefaultText" value="ХИМКИ_235" style="font-family:'Golos Text', sans-serif;">
+                    <label>Текст по умолчанию</label>
+                    <input type="text" id="labelDefaultText" value="ХИМКИ_235">
                 </div>
                 <div class="input-group">
-                    <label>📏 DPI (качество печати)</label>
+                    <label>DPI</label>
                     <select id="labelDpi">
-                        <option value="203">203 (термопринтер)</option>
-                        <option value="300" selected>300 (обычный принтер)</option>
-                        <option value="600">600 (высокое качество)</option>
+                        <option value="203">203</option>
+                        <option value="300" selected>300</option>
+                        <option value="600">600</option>
                     </select>
                 </div>
-                <div style="display:flex; align-items:flex-end;">
-                    <button id="generateLabelsBtn">✨ Сгенерировать PDF</button>
-                </div>
+                <div><button id="generateLabelsBtn">✨ Предпросмотр и PDF</button></div>
             </div>
-            <div style="font-size:0.85rem; color:#64748b; margin-top:8px;">
-                На листе A4 размещается 4 этикетки (75×120 мм). Сохранение в PDF (с точными размерами).
+            <div style="font-size:0.75rem; color:#555; margin-top:8px;">
+                На листе A4 размещается 4 этикетки (75×120 мм).
             </div>
         </div>
     </div>
 
-    <hr>
-    <div class="badge">⚡ Алгоритм: массовая генерация → Сетка/Лента или печать этикеток на A4 (PDF).</div>
+    <!-- ВКЛАДКА 3: ЭТИКЕТКИ OZON 58x40 -->
+    <div id="panelLabels58" class="panel hidden">
+        <div class="toolbar">
+            <div class="flex-row">
+                <div class="input-group" style="flex:2;">
+                    <label>Список ШК (Code-128) и текст снизу</label>
+                    <textarea id="label58CodesList" placeholder="0123456789012;ii90787663524&#10;9876543210987;ii12345678901" style="min-height:120px;"></textarea>
+                </div>
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>DPI</label>
+                    <select id="label58Dpi">
+                        <option value="203">203</option>
+                        <option value="300" selected>300</option>
+                        <option value="600">600</option>
+                    </select>
+                </div>
+                <div><button id="generate58Btn">✨ Предпросмотр и PDF</button></div>
+            </div>
+            <div style="font-size:0.75rem; color:#555; margin-top:8px;">
+                Размер этикетки 58×40 мм. Формат ввода: <code>Штрихкод;Текст снизу</code> (если текста нет, только ШК).
+            </div>
+        </div>
+    </div>
+
+    <!-- ВКЛАДКА 4: ЭКСТРАКТОР -->
+    <div id="panelExtractor" class="panel hidden">
+        <div class="toolbar">
+            <h2 style="font-size: 1.2rem; color: var(--accent-green); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;">📊 Экстрактор данных из Excel</h2>
+            
+            <div class="extractor-area" id="dropZone">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                <p>Перетащите файл <span class="highlight">.xlsx</span> сюда</p>
+                <p>или нажмите, чтобы выбрать</p>
+                <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
+            </div>
+
+            <div id="extractorResult" class="extractor-result hidden">
+                <div class="extractor-columns">
+                    <div class="extractor-col">
+                        <label>Названия</label>
+                        <div class="extractor-list" id="extractorNames"></div>
+                        <button id="copyNamesBtn" class="btn-secondary">📋 Копировать названия</button>
+                    </div>
+                    <div class="extractor-col">
+                        <label>Номера отправлений</label>
+                        <div class="extractor-list" id="extractorNumbers"></div>
+                        <button id="copyNumbersBtn" class="btn-secondary">📋 Копировать номера</button>
+                    </div>
+                </div>
+                <div class="extractor-actions" style="justify-content: flex-end;">
+                    <button id="copyCombinedBtn">📋 Копировать всё (Название;Номер)</button>
+                    <button id="clearExtractorBtn" class="btn-secondary">🗑️ Очистить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="badge">⚡ Система генерации кодов активна</div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ПРЕДПРОСМОТРА -->
+<div id="previewOverlay" class="preview-overlay hidden">
+    <div class="preview-modal">
+        <h2>👁️ Предпросмотр PDF</h2>
+        <div class="preview-content" id="previewContent"></div>
+        <div class="preview-actions">
+            <button id="cancelPreviewBtn" class="btn-secondary">Отмена</button>
+            <button id="downloadPdfBtn">📥 Скачать PDF</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    (function() {
-        // ===== DOM =====
-        const textarea = document.getElementById('barcodeList');
-        const generateBtn = document.getElementById('generateBtn');
-        const gridContainer = document.getElementById('gridContainer');
-        const feedContainer = document.getElementById('feedContainer');
-        const statsPanel = document.getElementById('statsPanel');
-        const totalCountSpan = document.getElementById('totalCount');
-        const downloadZipBtn = document.getElementById('downloadZipBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const currentTypeLabel = document.getElementById('currentTypeLabel');
-        const feedPosDisplay = document.getElementById('feedPositionDisplay');
-        const feedPosNum = document.getElementById('feedPosNum');
-        const feedTotalNum = document.getElementById('feedTotalNum');
-        const appContainer = document.getElementById('appContainer');
+// ============================================================
+// 👇 ВСТАВЬ СВОЙ BASE64 ВНУТРЬ КАВЫЧЕК (если логотип картинкой)
+// ============================================================
+const OZON_LOGO_BASE64 = "data:image/png;base64,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"; // <-- "data:image/png;base64,..."
+// ============================================================
 
-        const viewGridBtn = document.getElementById('viewGridBtn');
-        const viewFeedBtn = document.getElementById('viewFeedBtn');
+let ozonLogoImg = null;
+function loadOzonLogo() {
+    return new Promise((resolve) => {
+        if (!OZON_LOGO_BASE64 || OZON_LOGO_BASE64.trim() === "") { resolve(); return; }
+        const img = new Image();
+        img.onload = () => { ozonLogoImg = img; resolve(); };
+        img.onerror = () => { console.warn('Логотип не загрузился'); resolve(); };
+        img.src = OZON_LOGO_BASE64;
+    });
+}
 
-        const qrRadio = document.querySelector('input[value="qr"]');
-        const code128Radio = document.querySelector('input[value="code128"]');
-        const sizeInput = document.getElementById('sizeInput');
-        const widthInput = document.getElementById('widthInput');
-        const displayText = document.getElementById('displayText');
-        const barcodeOptionsDiv = document.getElementById('barcodeOptions');
+// ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = [
+        { btn: document.getElementById('tabMain'), panel: document.getElementById('panelMain') },
+        { btn: document.getElementById('tabLabels'), panel: document.getElementById('panelLabels') },
+        { btn: document.getElementById('tabLabels58'), panel: document.getElementById('panelLabels58') },
+        { btn: document.getElementById('tabExtractor'), panel: document.getElementById('panelExtractor') }
+    ];
 
-        const tabMainBtn = document.getElementById('tabMain');
-        const tabLabelsBtn = document.getElementById('tabLabels');
-        const panelMain = document.getElementById('panelMain');
-        const panelLabels = document.getElementById('panelLabels');
-
-        let currentBarcodes = [];          
-        let currentFormat = 'qr';
-        let currentView = 'grid';          
-        let feedIndex = 0;                
-
-        // ===== Переключение вкладок =====
-        tabMainBtn.addEventListener('click', () => {
-            tabMainBtn.classList.add('active');
-            tabLabelsBtn.classList.remove('active');
-            panelMain.classList.remove('hidden');
-            panelLabels.classList.add('hidden');
-        });
-
-        tabLabelsBtn.addEventListener('click', () => {
-            tabLabelsBtn.classList.add('active');
-            tabMainBtn.classList.remove('active');
-            panelLabels.classList.remove('hidden');
-            panelMain.classList.add('hidden');
-        });
-
-        // ===== Формат =====
-        function onFormatChange() {
-            if (qrRadio.checked) {
-                currentFormat = 'qr';
-                currentTypeLabel.innerText = 'QR-код';
-                barcodeOptionsDiv.style.display = 'flex';
-                document.querySelectorAll('#barcodeOptions .input-group').forEach(el => {
-                    if (el.querySelector('label')?.innerText.includes('Ширина')) el.style.display = 'none';
-                    if (el.querySelector('label')?.innerText.includes('Текст')) el.style.display = 'none';
-                });
-            } else {
-                currentFormat = 'code128';
-                currentTypeLabel.innerText = 'Code 128';
-                barcodeOptionsDiv.style.display = 'flex';
-                document.querySelectorAll('#barcodeOptions .input-group').forEach(el => {
-                    el.style.display = 'block';
-                });
-            }
-        }
-        qrRadio.addEventListener('change', onFormatChange);
-        code128Radio.addEventListener('change', onFormatChange);
-        onFormatChange();
-
-        // ===== Режимы =====
-        function setView(mode) {
-            currentView = mode;
-            if (mode === 'grid') {
-                appContainer.classList.remove('view-feed');
-                appContainer.classList.add('view-grid');
-                viewGridBtn.classList.add('active');
-                viewFeedBtn.classList.remove('active');
-                feedPosDisplay.style.display = 'none';
-                renderGrid(currentBarcodes);
-            } else {
-                appContainer.classList.remove('view-grid');
-                appContainer.classList.add('view-feed');
-                viewFeedBtn.classList.add('active');
-                viewGridBtn.classList.remove('active');
-                feedPosDisplay.style.display = 'inline-block';
-                renderFeed(currentBarcodes, feedIndex);
-            }
-        }
-
-        viewGridBtn.addEventListener('click', () => setView('grid'));
-        viewFeedBtn.addEventListener('click', () => {
-            if (currentBarcodes.length === 0) { alert('⚠️ Сначала сгенерируйте коды!'); return; }
-            setView('feed');
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (currentView !== 'feed' || currentBarcodes.length === 0) return;
-            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-                e.preventDefault();
-                if (feedIndex < currentBarcodes.length - 1) { feedIndex++; renderFeed(currentBarcodes, feedIndex); }
-            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                e.preventDefault();
-                if (feedIndex > 0) { feedIndex--; renderFeed(currentBarcodes, feedIndex); }
-            }
-        });
-
-        // ===== Генерация QR =====
-        function generateQRCode(value, size) {
-            return new Promise((resolve) => {
-                if (!value || value.trim() === '') { resolve(null); return; }
-                const tempDiv = document.createElement('div');
-                tempDiv.style.width = size + 'px';
-                tempDiv.style.height = size + 'px';
-                try {
-                    new QRCode(tempDiv, {
-                        text: value.trim(),
-                        width: parseInt(size),
-                        height: parseInt(size),
-                        colorDark: '#000000',
-                        colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.M
-                    });
-                    setTimeout(() => {
-                        const canvas = tempDiv.querySelector('canvas');
-                        if (canvas) {
-                            resolve({ value: value.trim(), dataUrl: canvas.toDataURL('image/png') });
-                        } else {
-                            const img = tempDiv.querySelector('img');
-                            if (img && img.src) resolve({ value: value.trim(), dataUrl: img.src });
-                            else resolve(null);
-                        }
-                    }, 30);
-                } catch(e) { resolve(null); }
+    tabs.forEach(t => {
+        t.btn.addEventListener('click', () => {
+            tabs.forEach(other => {
+                other.btn.classList.remove('active');
+                other.panel.classList.add('hidden');
             });
-        }
+            t.btn.classList.add('active');
+            t.panel.classList.remove('hidden');
+        });
+    });
+});
 
-        // ===== Генерация Code128 =====
-        function generateCode128(value, widthModule, height, showText) {
-            return new Promise((resolve) => {
-                if (!value || value.trim() === '') { resolve(null); return; }
-                const canvas = document.createElement('canvas');
-                try {
-                    JsBarcode(canvas, value.trim(), {
-                        format: 'CODE128',
-                        width: parseFloat(widthModule),
-                        height: parseInt(height, 10),
-                        displayValue: showText === 'true',
-                        fontSize: 14,
-                        margin: 8,
-                        background: '#ffffff',
-                        lineColor: '#000000'
-                    });
-                    setTimeout(() => {
-                        resolve({ value: value.trim(), dataUrl: canvas.toDataURL('image/png') });
-                    }, 10);
-                } catch(e) { resolve(null); }
-            });
-        }
+// ===== УТИЛИТЫ =====
+const mmToPx = (mm, dpi) => Math.round(mm * dpi / 25.4);
 
-        async function generateAll() {
-            const rawLines = textarea.value.split(/\r?\n/);
-            const codesList = rawLines.filter(line => line.trim().length > 0);
-            if (codesList.length === 0) { alert('❌ Введите хотя бы один код!'); return; }
-            if (codesList.length > 1200 && !confirm(`Вы генерируете ${codesList.length} кодов. Продолжить?`)) return;
+// ===== ЭКСТРАКТОР (Excel) =====
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const extractorResult = document.getElementById('extractorResult');
+const extractorNames = document.getElementById('extractorNames');
+const extractorNumbers = document.getElementById('extractorNumbers');
+const copyNamesBtn = document.getElementById('copyNamesBtn');
+const copyNumbersBtn = document.getElementById('copyNumbersBtn');
+const copyCombinedBtn = document.getElementById('copyCombinedBtn');
+const clearExtractorBtn = document.getElementById('clearExtractorBtn');
 
-            gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">⏳ Генерация ${codesList.length} кодов... подождите</div>`;
-            feedContainer.innerHTML = `<div class="feed-empty">⏳ Генерируем...</div>`;
-            currentBarcodes = [];
+let currentNames = [];
+let currentNumbers = [];
 
-            const sizeVal = parseInt(sizeInput.value, 10);
-            const results = [];
+// Клик по зоне
+dropZone.addEventListener('click', () => fileInput.click());
 
-            if (currentFormat === 'qr') {
-                for (let i = 0; i < codesList.length; i++) {
-                    const res = await generateQRCode(codesList[i], sizeVal);
-                    if (res) results.push(res);
-                    if (i % 50 === 0 && i > 0) gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">🔄 Прогресс: ${i} из ${codesList.length} QR...</div>`;
-                }
-            } else {
-                const widthVal = widthInput.value;
-                const heightVal = sizeVal;
-                const showTextVal = displayText.value;
-                for (let i = 0; i < codesList.length; i++) {
-                    const res = await generateCode128(codesList[i], widthVal, heightVal, showTextVal);
-                    if (res) results.push(res);
-                    if (i % 50 === 0 && i > 0) gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">🔄 Прогресс: ${i} из ${codesList.length} Code128...</div>`;
+// Выбор файла
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) handleFile(e.target.files[0]);
+});
+
+// Drag & Drop
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
+
+// Обработка файла
+function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            let headerRowIndex = -1;
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (row && row.some(cell => cell && typeof cell === 'string' && cell.includes('Этикетка'))) {
+                    headerRowIndex = i;
+                    break;
                 }
             }
 
-            currentBarcodes = results;
-            feedIndex = 0;
-            totalCountSpan.innerText = results.length;
-            statsPanel.style.display = 'flex';
-            downloadZipBtn.disabled = (results.length === 0);
-            feedTotalNum.innerText = results.length;
-
-            if (currentView === 'grid') renderGrid(results);
-            else renderFeed(results, 0);
-        }
-
-        function renderGrid(barcodes) {
-            gridContainer.innerHTML = '';
-            if (!barcodes || barcodes.length === 0) {
-                gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#73879a;">🔍 Нет кодов для отображения</div>`;
+            if (headerRowIndex === -1) {
+                alert('Не удалось найти строку с заголовками (колонка "Этикетка")');
                 return;
             }
-            for (let item of barcodes) {
-                const card = document.createElement('div');
-                card.className = 'barcode-card';
-                const img = document.createElement('img');
-                img.src = item.dataUrl;
-                img.style.maxWidth = '100%';
-                img.style.background = 'white';
-                img.style.padding = '5px';
-                const span = document.createElement('div');
-                span.className = 'code-value';
-                span.innerText = item.value.length > 45 ? item.value.slice(0,42)+'...' : item.value;
-                card.appendChild(img);
-                card.appendChild(span);
-                gridContainer.appendChild(card);
-            }
-        }
 
-        function renderFeed(barcodes, index) {
-            if (!barcodes || barcodes.length === 0) {
-                feedContainer.innerHTML = `<div class="feed-empty">🔍 Нет данных. Сгенерируйте коды.</div>`;
-                return;
-            }
-            if (index < 0) index = 0;
-            if (index >= barcodes.length) index = barcodes.length - 1;
-            feedIndex = index;
-            const item = barcodes[index];
-            feedContainer.innerHTML = `
-                <div class="feed-item">
-                    <img src="${item.dataUrl}" alt="Код ${index+1}" />
-                    <div class="feed-counter">${index+1} / ${barcodes.length}</div>
-                    <div class="feed-value">${item.value}</div>
-                    <div class="feed-nav-hint">⬆️⬇️ Стрелки клавиатуры для навигации</div>
-                </div>
-            `;
-            feedPosNum.innerText = index+1;
-            feedTotalNum.innerText = barcodes.length;
-        }
+            const headers = rows[headerRowIndex];
+            let colNameIndex = -1;
+            let colNumberIndex = -1;
 
-        function clearAll() {
-            textarea.value = '';
-            currentBarcodes = [];
-            gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#73879a;">⬅️ Введите данные и нажмите «Сгенерировать»</div>`;
-            feedContainer.innerHTML = `<div class="feed-empty">🔍 Нет данных. Сгенерируйте коды.</div>`;
-            statsPanel.style.display = 'none';
-            downloadZipBtn.disabled = true;
-            feedIndex = 0;
-        }
-
-        function downloadAllAsZip() {
-            if (!currentBarcodes.length) { alert('Нет данных. Сначала сгенерируйте коды.'); return; }
-            const zip = new JSZip();
-            const folder = zip.folder(currentFormat === 'qr' ? 'qr_codes' : 'code128_barcodes');
-            for (let i = 0; i < currentBarcodes.length; i++) {
-                const b = currentBarcodes[i];
-                let safeName = b.value.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
-                if (!safeName) safeName = `code_${i+1}`;
-                const fileName = `${safeName}.png`;
-                const imageData = b.dataUrl.split(',')[1];
-                const blob = base64ToBlob(imageData, 'image/png');
-                folder.file(fileName, blob);
-            }
-            zip.generateAsync({ type: 'blob' }).then(content => {
-                const zipName = currentFormat === 'qr' ? 'qr_codes.zip' : 'code128_barcodes.zip';
-                saveAs(content, zipName);
-            }).catch(err => { alert('Ошибка создания архива.'); console.error(err); });
-        }
-
-        function base64ToBlob(base64, mimeType) {
-            const byteCharacters = atob(base64);
-            const byteArrays = [];
-            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                const slice = byteCharacters.slice(offset, offset + 512);
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) byteNumbers[i] = slice.charCodeAt(i);
-                const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-            return new Blob(byteArrays, { type: mimeType });
-        }
-
-        function fillDemo() {
-            const demo = [];
-            for (let i = 1; i <= 35; i++) demo.push(`ТОВАР-${String(i).padStart(3,'0')}`);
-            demo.push('https://example.com/product/500');
-            demo.push('АРТИКУЛ-SUPER-500');
-            textarea.value = demo.join('\n');
-        }
-        if (textarea.value.trim() === '') fillDemo();
-
-        generateBtn.addEventListener('click', generateAll);
-        downloadZipBtn.addEventListener('click', downloadAllAsZip);
-        clearBtn.addEventListener('click', clearAll);
-
-        // =====================================================================
-        // ===== ВКЛАДКА ЭТИКЕТОК OZON A4 =====
-        // =====================================================================
-        const labelCodesList = document.getElementById('labelCodesList');
-        const labelDefaultText = document.getElementById('labelDefaultText');
-        const labelDpi = document.getElementById('labelDpi');
-        const generateLabelsBtn = document.getElementById('generateLabelsBtn');
-
-        const mmToPx = (mm, dpi) => Math.round(mm * dpi / 25.4);
-
-        function createQRCanvas(value, sizePx) {
-            return new Promise((resolve) => {
-                const tempDiv = document.createElement('div');
-                tempDiv.style.width = sizePx + 'px';
-                tempDiv.style.height = sizePx + 'px';
-                try {
-                    new QRCode(tempDiv, {
-                        text: value,
-                        width: sizePx,
-                        height: sizePx,
-                        colorDark: '#000000',
-                        colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.M
-                    });
-                    let attempts = 0;
-                    const check = setInterval(() => {
-                        const canvas = tempDiv.querySelector('canvas');
-                        const img = tempDiv.querySelector('img');
-                        if (canvas) {
-                            clearInterval(check);
-                            resolve(canvas);
-                        } else if (img) {
-                            clearInterval(check);
-                            const c = document.createElement('canvas');
-                            c.width = sizePx;
-                            c.height = sizePx;
-                            const cx = c.getContext('2d');
-                            cx.drawImage(img, 0, 0, sizePx, sizePx);
-                            resolve(c);
-                        } else if (attempts++ > 50) {
-                            clearInterval(check);
-                            resolve(null);
-                        }
-                    }, 10);
-                } catch(e) { resolve(null); }
+            headers.forEach((header, index) => {
+                if (header && typeof header === 'string') {
+                    if (header.includes('Этикетка') && header.includes('Название')) colNameIndex = index;
+                    if (header.includes('Номер отправления')) colNumberIndex = index;
+                }
             });
-        }
 
-        async function drawLabel(ctx, pos, labelW, labelH, codeData, defaultText, dpi) {
-            const qrValue = codeData.qr;
-            const bottomText = codeData.bottom;
-
-            // --- Пунктирная рамка для вырезания ---
-            ctx.save();
-            ctx.strokeStyle = '#999999';
-            ctx.lineWidth = Math.max(1, mmToPx(0.3, dpi));
-            ctx.setLineDash([mmToPx(2, dpi), mmToPx(1.5, dpi)]);
-            ctx.strokeRect(pos.x + mmToPx(1, dpi), pos.y + mmToPx(1, dpi), 
-                           labelW - mmToPx(2, dpi), labelH - mmToPx(2, dpi));
-            ctx.restore();
-
-            // --- QR-код ---
-            const qrSize = mmToPx(40, dpi);
-            const qrCanvas = await createQRCanvas(qrValue, qrSize);
-            if (qrCanvas) {
-                ctx.drawImage(qrCanvas, pos.x + (labelW - qrSize) / 2, pos.y + mmToPx(5, dpi));
+            if (colNameIndex === -1) {
+                headers.forEach((header, index) => {
+                    if (header && typeof header === 'string' && header.toLowerCase().includes('название')) colNameIndex = index;
+                });
+            }
+            if (colNumberIndex === -1) {
+                headers.forEach((header, index) => {
+                    if (header && typeof header === 'string' && header.toLowerCase().includes('номер') && header.toLowerCase().includes('отправления')) colNumberIndex = index;
+                });
             }
 
-            // --- Текст по умолчанию ---
-            ctx.save();
-            ctx.fillStyle = '#000000';
-            ctx.font = `700 ${mmToPx(6, dpi)}px 'Golos Text', sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText(defaultText || 'ХИМКИ_235', pos.x + labelW / 2, pos.y + mmToPx(50, dpi));
-            ctx.restore();
-
-            // --- Основной код ---
-            ctx.save();
-            
-            const firstDashIndex = qrValue.indexOf('-');
-            let line1 = qrValue;
-            let line2 = '';
-            
-            if (firstDashIndex !== -1) {
-                line1 = qrValue.substring(0, firstDashIndex).trim();
-                line2 = qrValue.substring(firstDashIndex).trim(); 
+            if (colNameIndex === -1 || colNumberIndex === -1) {
+                alert('Не удалось найти колонки "Название" или "Номер отправления". Проверьте заголовки.');
+                return;
             }
 
-            let prefixPart = line1;
-            let last4Part = '';
+            currentNames = [];
+            currentNumbers = [];
             
-            if (line1.length === 10) {
-                prefixPart = line1.substring(0, 6);
-                last4Part = line1.substring(6); 
-            } else if (line1.length > 4 && /^\d+$/.test(line1)) {
-                prefixPart = line1.slice(0, -4);
-                last4Part = line1.slice(-4);
-            }
-
-            // Настройки шрифта
-            let fontSize = mmToPx(11, dpi);
-            ctx.font = `700 ${fontSize}px 'Golos Text', sans-serif`;
-            
-            while (ctx.measureText(line1).width > labelW * 0.9 && fontSize > mmToPx(7, dpi)) {
-                fontSize -= 1;
-                ctx.font = `700 ${fontSize}px 'Golos Text', sans-serif`;
-            }
-
-            const prefixWidth = prefixPart ? ctx.measureText(prefixPart).width : 0;
-            const last4Width = last4Part ? ctx.measureText(last4Part).width : 0;
-            
-            // Отступ между блоками
-            const gap = mmToPx(2, dpi);
-            const fullWidth = prefixWidth + (prefixPart && last4Part ? gap : 0) + last4Width;
-            
-            const startX = pos.x + (labelW - fullWidth) / 2;
-            const line1Y = pos.y + mmToPx(60, dpi);
-
-            // Подложка
-            if (last4Part) {
-                const bgPadX = mmToPx(0.8, dpi);
-                const bgPadY = mmToPx(0.2, dpi);
-                const radius = mmToPx(1.2, dpi);
+            for (let i = headerRowIndex + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row) continue;
                 
-                ctx.fillStyle = '#000000';
+                const name = row[colNameIndex] ? String(row[colNameIndex]).trim() : '';
+                const number = row[colNumberIndex] ? String(row[colNumberIndex]).trim() : '';
+                
+                if (name && number) {
+                    const cleanName = name.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                    const cleanNumber = number.replace(/\n/g, ' ').trim();
+                    
+                    if (cleanName && cleanNumber) {
+                        currentNames.push(cleanName);
+                        currentNumbers.push(cleanNumber);
+                    }
+                }
+            }
+
+            if (currentNames.length === 0) {
+                alert('Не найдено ни одной строки с заполненными "Название" и "Номер отправления"');
+                return;
+            }
+
+            // Выводим в два поля
+            extractorNames.textContent = currentNames.join('\n');
+            extractorNumbers.textContent = currentNumbers.join('\n');
+            extractorResult.classList.remove('hidden');
+
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при чтении файла. Убедитесь, что это корректный .xlsx файл.');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// Копирование названий
+copyNamesBtn.addEventListener('click', () => {
+    if (currentNames.length === 0) return;
+    const text = currentNames.join('\n');
+    
+    navigator.clipboard.writeText(text).then(() => {
+        copyNamesBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => { copyNamesBtn.textContent = '📋 Копировать названия'; }, 2000);
+    }).catch(() => {
+        fallbackCopy(text, copyNamesBtn, '📋 Копировать названия');
+    });
+});
+
+// Копирование номеров
+copyNumbersBtn.addEventListener('click', () => {
+    if (currentNumbers.length === 0) return;
+    const text = currentNumbers.join('\n');
+    
+    navigator.clipboard.writeText(text).then(() => {
+        copyNumbersBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => { copyNumbersBtn.textContent = '📋 Копировать номера'; }, 2000);
+    }).catch(() => {
+        fallbackCopy(text, copyNumbersBtn, '📋 Копировать номера');
+    });
+});
+
+// Копирование комбинированно (Название;Номер)
+copyCombinedBtn.addEventListener('click', () => {
+    if (currentNames.length === 0) return;
+    const text = currentNames.map((name, i) => `${name};${currentNumbers[i]}`).join('\n');
+    
+    navigator.clipboard.writeText(text).then(() => {
+        copyCombinedBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => { copyCombinedBtn.textContent = '📋 Копировать всё (Название;Номер)'; }, 2000);
+    }).catch(() => {
+        fallbackCopy(text, copyCombinedBtn, '📋 Копировать всё (Название;Номер)');
+    });
+});
+
+// Фолбэк копирования
+function fallbackCopy(text, btn, originalText) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    btn.textContent = '✅ Скопировано!';
+    setTimeout(() => { btn.textContent = originalText; }, 2000);
+}
+
+// Очистка
+clearExtractorBtn.addEventListener('click', () => {
+    extractorNames.textContent = '';
+    extractorNumbers.textContent = '';
+    extractorResult.classList.add('hidden');
+    fileInput.value = '';
+    currentNames = [];
+    currentNumbers = [];
+});
+
+// ============================================================
+// ===== ДАЛЕЕ ИДЕТ ВЕСЬ ОСТАЛЬНОЙ КОД ИЗ ТВОЕГО ФАЙЛА =====
+// ============================================================
+
+// Функция генерации чистого QR (без подложки)
+function generateQRCore(value, size) {
+    return new Promise((resolve) => {
+        try {
+            const qr = qrcode(0, 'M');
+            qr.addData(value);
+            qr.make();
+
+            const moduleCount = qr.getModuleCount();
+            const moduleSize = size / moduleCount;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+
+            const dataRadius = Math.max(0.5, moduleSize * 0.15);
+
+            for (let row = 0; row < moduleCount; row++) {
+                for (let col = 0; col < moduleCount; col++) {
+                    if (!qr.isDark(row, col)) continue;
+
+                    const isEye =
+                        (row < 7 && col < 7) ||
+                        (row < 7 && col >= moduleCount - 7) ||
+                        (row >= moduleCount - 7 && col < 7);
+
+                    if (isEye) continue;
+
+                    const x = col * moduleSize;
+                    const y = row * moduleSize;
+
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(x, y, moduleSize, moduleSize, dataRadius);
+                    } else {
+                        ctx.rect(x, y, moduleSize, moduleSize);
+                    }
+                    ctx.fillStyle = '#000000';
+                    ctx.fill();
+                }
+            }
+
+            const drawEye = (eyeCol, eyeRow) => {
+                const startX = eyeCol * moduleSize;
+                const startY = eyeRow * moduleSize;
+                const eyeSize = 7 * moduleSize;
+
+                const outerRadius = eyeSize * 0.28;
                 ctx.beginPath();
                 if (ctx.roundRect) {
-                    ctx.roundRect(
-                        startX + prefixWidth + (prefixPart ? gap : 0) - bgPadX, 
-                        line1Y - bgPadY, 
-                        last4Width + bgPadX * 2, 
-                        fontSize + bgPadY * 2 + mmToPx(0.5, dpi), 
-                        radius
-                    );
+                    ctx.roundRect(startX, startY, eyeSize, eyeSize, outerRadius);
                 } else {
-                    ctx.rect(
-                        startX + prefixWidth + (prefixPart ? gap : 0) - bgPadX, 
-                        line1Y - bgPadY, 
-                        last4Width + bgPadX * 2, 
-                        fontSize + bgPadY * 2
-                    );
+                    ctx.rect(startX, startY, eyeSize, eyeSize);
                 }
+                ctx.fillStyle = '#000000';
                 ctx.fill();
-                
-                // Белый текст
+
+                const innerSize = 5 * moduleSize;
+                const innerOffset = moduleSize;
+                const innerRadius = innerSize * 0.25;
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(startX + innerOffset, startY + innerOffset, innerSize, innerSize, innerRadius);
+                } else {
+                    ctx.rect(startX + innerOffset, startY + innerOffset, innerSize, innerSize);
+                }
                 ctx.fillStyle = '#ffffff';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                ctx.fillText(last4Part, startX + prefixWidth + (prefixPart ? gap : 0), line1Y + mmToPx(0.2, dpi));
-            }
+                ctx.fill();
 
-            // Текст первой строки
-            ctx.fillStyle = '#000000';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            if (prefixPart) {
-                ctx.fillText(prefixPart, startX, line1Y);
-            }
+                const dotSize = 3 * moduleSize;
+                const dotOffset = 2 * moduleSize;
+                const dotRadius = dotSize * 0.15;
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(startX + dotOffset, startY + dotOffset, dotSize, dotSize, dotRadius);
+                } else {
+                    ctx.rect(startX + dotOffset, startY + dotOffset, dotSize, dotSize);
+                }
+                ctx.fillStyle = '#000000';
+                ctx.fill();
+            };
 
-            // Вторая строка
-            if (line2) {
-                let font2Size = mmToPx(9, dpi);
-                ctx.font = `700 ${font2Size}px 'Golos Text', sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                
-                const line2Y = line1Y + fontSize + mmToPx(2, dpi);
-                ctx.fillText(line2, pos.x + labelW / 2, line2Y);
-            }
+            drawEye(0, 0);
+            drawEye(moduleCount - 7, 0);
+            drawEye(0, moduleCount - 7);
 
-            ctx.restore();
+            resolve(canvas);
+        } catch (e) {
+            console.error('QR generation error:', e);
+            resolve(null);
+        }
+    });
+}
+
+// Функция генерации QR с белой подложкой (+10% с каждой стороны)
+function generateQRWithPadding(value, coreSize) {
+    return new Promise(async (resolve) => {
+        const coreCanvas = await generateQRCore(value, coreSize);
+        if (!coreCanvas) { resolve(null); return; }
+
+        const pad = Math.round(coreSize * 0.1);
+        const totalSize = coreSize + pad * 2;
+
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = totalSize;
+        finalCanvas.height = totalSize;
+        const ctx = finalCanvas.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, totalSize, totalSize);
+
+        ctx.drawImage(coreCanvas, pad, pad, coreSize, coreSize);
+
+        resolve(finalCanvas);
+    });
+}
+
+// Функция генерации Code-128
+function generateCode128(value, width, height) {
+    return new Promise((resolve) => {
+        try {
+            const canvas = document.createElement('canvas');
+            JsBarcode(canvas, value, {
+                format: "CODE128",
+                width: width,
+                height: height,
+                displayValue: false,
+                margin: 0
+            });
+            resolve(canvas);
+        } catch (e) {
+            console.error('Barcode generation error:', e);
+            resolve(null);
+        }
+    });
+}
+
+// ===== ВКЛАДКА 1: ОБЫЧНЫЕ QR =====
+const barcodeList = document.getElementById('barcodeList');
+const generateBtn = document.getElementById('generateBtn');
+const sizeInput = document.getElementById('sizeInput');
+const gridContainer = document.getElementById('gridContainer');
+const feedContainer = document.getElementById('feedContainer');
+const viewGridBtn = document.getElementById('viewGridBtn');
+const viewFeedBtn = document.getElementById('viewFeedBtn');
+
+let currentBarcodes = [];
+let currentView = 'grid';
+let feedIndex = 0;
+
+function setView(mode) {
+    currentView = mode;
+    if (mode === 'grid') {
+        gridContainer.classList.remove('hidden');
+        feedContainer.classList.add('hidden');
+        viewGridBtn.classList.add('active');
+        viewFeedBtn.classList.remove('active');
+        renderGrid();
+    } else {
+        gridContainer.classList.add('hidden');
+        feedContainer.classList.remove('hidden');
+        viewFeedBtn.classList.add('active');
+        viewGridBtn.classList.remove('active');
+        renderFeed();
+    }
+}
+
+viewGridBtn.addEventListener('click', () => setView('grid'));
+viewFeedBtn.addEventListener('click', () => setView('feed'));
+
+function renderGrid() {
+    gridContainer.innerHTML = '';
+    if (currentBarcodes.length === 0) {
+        gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#555;">⬅️ Введите данные и нажмите «Сгенерировать»</div>`;
+        return;
+    }
+    currentBarcodes.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'barcode-card';
+        card.appendChild(item.canvas);
+        const textDiv = document.createElement('div');
+        textDiv.className = 'code-value';
+        textDiv.innerText = item.value;
+        card.appendChild(textDiv);
+        gridContainer.appendChild(card);
+    });
+}
+
+function renderFeed() {
+    feedContainer.innerHTML = '';
+    if (currentBarcodes.length === 0) {
+        feedContainer.innerHTML = `<div style="text-align:center; color:#555;">Нет данных</div>`;
+        return;
+    }
+    
+    if (feedIndex < 0) feedIndex = 0;
+    if (feedIndex >= currentBarcodes.length) feedIndex = currentBarcodes.length - 1;
+    
+    const item = currentBarcodes[feedIndex];
+    
+    const clone = item.canvas.cloneNode(true);
+    const ctx = clone.getContext('2d');
+    ctx.drawImage(item.canvas, 0, 0);
+    
+    feedContainer.appendChild(clone);
+    
+    const counter = document.createElement('div');
+    counter.className = 'feed-counter';
+    counter.innerText = `${feedIndex + 1} / ${currentBarcodes.length}`;
+    feedContainer.appendChild(counter);
+    
+    const val = document.createElement('div');
+    val.className = 'feed-value';
+    val.innerText = item.value;
+    feedContainer.appendChild(val);
+    
+    const hint = document.createElement('div');
+    hint.className = 'feed-hint';
+    hint.innerHTML = `⬅️ ➡️ Переключение <span>стрелками</span>`;
+    feedContainer.appendChild(hint);
+}
+
+document.addEventListener('keydown', (e) => {
+    if (currentView !== 'feed' || currentBarcodes.length === 0) return;
+    
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (feedIndex < currentBarcodes.length - 1) {
+            feedIndex++;
+            renderFeed();
+        }
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (feedIndex > 0) {
+            feedIndex--;
+            renderFeed();
+        }
+    }
+});
+
+generateBtn.addEventListener('click', async () => {
+    const raw = barcodeList.value.split(/\r?\n/).filter(l => l.trim());
+    if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
+    
+    gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--accent-green);">⏳ Генерация...</div>`;
+    feedContainer.classList.add('hidden');
+    gridContainer.classList.remove('hidden');
+    
+    const sizeVal = parseInt(sizeInput.value, 10);
+    currentBarcodes = [];
+    feedIndex = 0;
+    
+    for (let val of raw) {
+        const qrCanvas = await generateQRWithPadding(val, sizeVal);
+        if (qrCanvas) {
+            currentBarcodes.push({ value: val, canvas: qrCanvas });
+        }
+    }
+    
+    if (currentView === 'grid') {
+        renderGrid();
+    } else {
+        renderFeed();
+    }
+});
+
+// ===== ВКЛАДКА 2: ЭТИКЕТКИ OZON A4 =====
+const labelCodesList = document.getElementById('labelCodesList');
+const labelDefaultText = document.getElementById('labelDefaultText');
+const labelDpi = document.getElementById('labelDpi');
+const generateLabelsBtn = document.getElementById('generateLabelsBtn');
+const previewOverlay = document.getElementById('previewOverlay');
+const previewContent = document.getElementById('previewContent');
+const cancelPreviewBtn = document.getElementById('cancelPreviewBtn');
+const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+
+let renderedSheets = [];
+let currentDpi = 300;
+let currentFormat = 'A4';
+
+async function drawLabel(ctx, pos, labelW, labelH, codeData, defaultText, dpi) {
+    const qrValue = codeData.qr;
+
+    ctx.save();
+    ctx.strokeStyle = '#999999';
+    ctx.lineWidth = Math.max(1, mmToPx(0.2, dpi));
+    ctx.setLineDash([mmToPx(2, dpi), mmToPx(1.5, dpi)]);
+    ctx.strokeRect(pos.x + mmToPx(1, dpi), pos.y + mmToPx(1, dpi),
+                   labelW - mmToPx(2, dpi), labelH - mmToPx(2, dpi));
+    ctx.restore();
+
+    const logoY = pos.y + mmToPx(4, dpi);
+    if (ozonLogoImg) {
+        const logoHeight = mmToPx(8, dpi);
+        const logoWidth = logoHeight * (ozonLogoImg.width / ozonLogoImg.height);
+        ctx.drawImage(ozonLogoImg, pos.x + (labelW - logoWidth) / 2, logoY, logoWidth, logoHeight);
+    } else {
+        ctx.save();
+        ctx.fillStyle = '#000000';
+        ctx.font = `900 ${mmToPx(9, dpi)}px 'Onest', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('OZON', pos.x + labelW / 2, logoY);
+        ctx.restore();
+    }
+
+    const qrSize = mmToPx(44, dpi);
+    const qrX = pos.x + (labelW - qrSize) / 2;
+    const qrY = pos.y + mmToPx(15, dpi);
+    const qrCanvas = await generateQRCore(qrValue, qrSize);
+    if (qrCanvas) {
+        ctx.drawImage(qrCanvas, qrX, qrY);
+    } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX, qrY, qrSize, qrSize);
+        ctx.strokeStyle = '#ff0000';
+        ctx.strokeRect(qrX, qrY, qrSize, qrSize);
+    }
+
+    ctx.save();
+    ctx.fillStyle = '#000000';
+    ctx.font = `500 ${mmToPx(5, dpi)}px 'Onest', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(defaultText || 'ХИМКИ_235', pos.x + labelW / 2, qrY + qrSize + mmToPx(3, dpi));
+    ctx.restore();
+
+    ctx.save();
+
+    const firstDashIndex = qrValue.indexOf('-');
+    let line1 = qrValue;
+    let line2 = '';
+    if (firstDashIndex !== -1) {
+        line1 = qrValue.substring(0, firstDashIndex).trim();
+        line2 = qrValue.substring(firstDashIndex).trim();
+    }
+
+    let prefixPart = line1;
+    let last4Part = '';
+    if (line1.length === 10) {
+        prefixPart = line1.substring(0, 6);
+        last4Part = line1.substring(6);
+    } else if (line1.length > 4) {
+        prefixPart = line1.slice(0, -4);
+        last4Part = line1.slice(-4);
+    }
+
+    const gap = mmToPx(2, dpi);
+    let fontSize = mmToPx(11, dpi);
+    ctx.font = `700 ${fontSize}px 'Onest', sans-serif`;
+    while (fontSize > mmToPx(7, dpi)) {
+        ctx.font = `700 ${fontSize}px 'Onest', sans-serif`;
+        const digitW = ctx.measureText('0').width;
+        const prefixW = prefixPart ? ctx.measureText(prefixPart).width : 0;
+        const last4W = last4Part ? ctx.measureText(last4Part).width : 0;
+        const totalW = prefixW + (prefixPart && last4Part ? gap : 0) + last4W;
+        const allowedW = qrSize + 2 * digitW;
+        if (totalW <= allowedW) break;
+        fontSize -= 1;
+    }
+    ctx.font = `700 ${fontSize}px 'Onest', sans-serif`;
+
+    const prefixWidth = prefixPart ? ctx.measureText(prefixPart).width : 0;
+    const last4Width = last4Part ? ctx.measureText(last4Part).width : 0;
+    const fullWidth = prefixWidth + (prefixPart && last4Part ? gap : 0) + last4Width;
+
+    const startX = qrX + (qrSize - fullWidth) / 2;
+    const line1Y = pos.y + mmToPx(70, dpi) + fontSize / 2;
+
+    if (last4Part) {
+        const bgPadX = mmToPx(0.6, dpi);
+        const bgPadY = mmToPx(0.3, dpi);
+        const radius = mmToPx(1.2, dpi);
+        const bgX = startX + prefixWidth + (prefixPart ? gap : 0) - bgPadX;
+        const bgY = line1Y - fontSize / 2 - bgPadY;
+        const bgW = last4Width + bgPadX * 2;
+        const bgH = fontSize + bgPadY * 2;
+
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(bgX, bgY, bgW, bgH, radius);
+        } else {
+            ctx.rect(bgX, bgY, bgW, bgH);
+        }
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const visualCenterY = bgY + bgH / 2 + (fontSize * 0.05); 
+        ctx.fillText(last4Part, bgX + bgW / 2, visualCenterY);
+    }
+
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    if (prefixPart) {
+        ctx.fillText(prefixPart, startX, line1Y);
+    }
+
+    if (line2) {
+        let font2Size = fontSize;
+        ctx.font = `700 ${font2Size}px 'Onest', sans-serif`;
+        while (font2Size > mmToPx(6, dpi)) {
+            ctx.font = `700 ${font2Size}px 'Onest', sans-serif`;
+            const digitW = ctx.measureText('0').width;
+            const textW = ctx.measureText(line2).width;
+            const allowedW = qrSize + 2 * digitW;
+            if (textW <= allowedW) break;
+            font2Size -= 1;
+        }
+        ctx.font = `700 ${font2Size}px 'Onest', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const line2Y = line1Y + fontSize / 2 + mmToPx(2, dpi) + font2Size / 2;
+        ctx.fillText(line2, qrX + qrSize / 2, line2Y);
+    }
+
+    ctx.restore();
+}
+
+async function renderSheetCanvas(codes, dpi) {
+    const pageW = mmToPx(210, dpi);
+    const pageH = mmToPx(297, dpi);
+    const labelW = mmToPx(75, dpi);
+    const labelH = mmToPx(120, dpi);
+    const margin = mmToPx(5, dpi);
+    const gap = mmToPx(3, dpi);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = pageW;
+    canvas.height = pageH;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, pageW, pageH);
+
+    const positions = [
+        { x: margin, y: margin },
+        { x: margin + labelW + gap, y: margin },
+        { x: margin, y: margin + labelH + gap },
+        { x: margin + labelW + gap, y: margin + labelH + gap }
+    ];
+
+    for (let i = 0; i < codes.length && i < 4; i++) {
+        await drawLabel(ctx, positions[i], labelW, labelH, codes[i], labelDefaultText.value, dpi);
+    }
+    return canvas;
+}
+
+generateLabelsBtn.addEventListener('click', async () => {
+    const raw = labelCodesList.value.split(/\r?\n/).filter(l => l.trim());
+    if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
+
+    if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+    }
+    if (!ozonLogoImg) {
+        await loadOzonLogo();
+    }
+
+    const codes = raw.map(line => {
+        const parts = line.split(';').map(s => s.trim());
+        return { qr: parts[0], bottom: parts.length > 1 ? parts[1] : '' };
+    });
+
+    currentDpi = parseInt(labelDpi.value, 10);
+    currentFormat = 'A4';
+    const sheets = [];
+    for (let i = 0; i < codes.length; i += 4) sheets.push(codes.slice(i, i + 4));
+
+    generateLabelsBtn.disabled = true;
+    generateLabelsBtn.textContent = '⏳ Генерация...';
+
+    try {
+        renderedSheets = [];
+        for (let s = 0; s < sheets.length; s++) {
+            const canvas = await renderSheetCanvas(sheets[s], currentDpi);
+            renderedSheets.push(canvas);
         }
 
-        async function renderSheetCanvas(codes, dpi) {
-            const pageW = mmToPx(210, dpi);
-            const pageH = mmToPx(297, dpi);
-            const labelW = mmToPx(75, dpi);
-            const labelH = mmToPx(120, dpi);
-            const margin = mmToPx(5, dpi);
-            const gap = mmToPx(3, dpi);
+        previewContent.innerHTML = '';
+        for (let s = 0; s < renderedSheets.length; s++) {
+            const label = document.createElement('div');
+            label.className = 'preview-page-label';
+            label.textContent = `Лист ${s + 1} из ${renderedSheets.length}`;
+            previewContent.appendChild(label);
 
+            const img = document.createElement('img');
+            img.src = renderedSheets[s].toDataURL('image/png');
+            img.style.maxHeight = '70vh';
+            previewContent.appendChild(img);
+        }
+
+        previewOverlay.classList.remove('hidden');
+
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+        console.error(err);
+    } finally {
+        generateLabelsBtn.disabled = false;
+        generateLabelsBtn.textContent = '✨ Предпросмотр и PDF';
+    }
+});
+
+// ===== ВКЛАДКА 3: ЭТИКЕТКИ 58x40 =====
+const label58CodesList = document.getElementById('label58CodesList');
+const label58Dpi = document.getElementById('label58Dpi');
+const generate58Btn = document.getElementById('generate58Btn');
+
+async function drawLabel58(ctx, pos, labelW, labelH, codeData, dpi) {
+    const barcodeValue = codeData.barcode;
+    const bottomText = codeData.bottom;
+
+    // 1. БЕЛЫЙ ФОН
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(pos.x, pos.y, labelW, labelH);
+
+    // 2. ЛОГОТИП
+    const logoY = pos.y + mmToPx(2, dpi);
+    if (ozonLogoImg) {
+        const logoHeight = mmToPx(5, dpi);
+        const logoWidth = logoHeight * (ozonLogoImg.width / ozonLogoImg.height);
+        ctx.drawImage(ozonLogoImg, pos.x + (labelW - logoWidth) / 2, logoY, logoWidth, logoHeight);
+    } else {
+        ctx.save();
+        ctx.fillStyle = '#000000';
+        ctx.font = `900 ${mmToPx(5.5, dpi)}px 'Onest', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('OZON', pos.x + labelW / 2, logoY);
+        ctx.restore();
+    }
+
+    // 3. ШТРИХКОД
+    const barcodeHeight = mmToPx(20, dpi);
+    const barcodeWidth = labelW * 0.9;
+    const barcodeX = pos.x + (labelW - barcodeWidth) / 2;
+    const barcodeY = pos.y + mmToPx(8, dpi);
+
+    const tempCanvas = document.createElement('canvas');
+    JsBarcode(tempCanvas, barcodeValue, {
+        format: "CODE128",
+        width: 2,
+        height: barcodeHeight,
+        displayValue: false,
+        margin: 0,
+        background: "#ffffff"
+    });
+
+    if (tempCanvas.width > 0) {
+        ctx.drawImage(tempCanvas, barcodeX, barcodeY, barcodeWidth, barcodeHeight);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(pos.x, barcodeY + barcodeHeight, labelW, labelH - (barcodeY - pos.y) - barcodeHeight);
+    } else {
+        ctx.fillStyle = '#ffcccc';
+        ctx.fillRect(barcodeX, barcodeY, barcodeWidth, barcodeHeight);
+    }
+
+    // 4. ТЕКСТ СНИЗУ
+    if (bottomText) {
+        ctx.save();
+        ctx.fillStyle = '#000000';
+        
+        let fontSize = mmToPx(6, dpi);
+        ctx.font = `700 ${fontSize}px 'Onest', sans-serif`;
+        
+        while (ctx.measureText(bottomText).width > labelW * 0.95 && fontSize > mmToPx(4, dpi)) {
+            fontSize -= 1;
+            ctx.font = `700 ${fontSize}px 'Onest', sans-serif`;
+        }
+        
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        
+        ctx.fillText(bottomText, pos.x + labelW / 2, pos.y + labelH - mmToPx(2, dpi));
+        ctx.restore();
+    }
+}
+
+generate58Btn.addEventListener('click', async () => {
+    const raw = label58CodesList.value.split(/\r?\n/).filter(l => l.trim());
+    if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
+
+    if (!ozonLogoImg) {
+        await loadOzonLogo();
+    }
+
+    const codes = raw.map(line => {
+        const parts = line.split(';').map(s => s.trim());
+        return { barcode: parts[0], bottom: parts.length > 1 ? parts[1] : '' };
+    });
+
+    const dpi = parseInt(label58Dpi.value, 10);
+    currentDpi = dpi;
+    currentFormat = '58x40';
+
+    generate58Btn.disabled = true;
+    generate58Btn.textContent = '⏳ Генерация...';
+
+    try {
+        renderedSheets = [];
+        for (let i = 0; i < codes.length; i++) {
+            const pageW = mmToPx(58, dpi);
+            const pageH = mmToPx(40, dpi);
             const canvas = document.createElement('canvas');
             canvas.width = pageW;
             canvas.height = pageH;
             const ctx = canvas.getContext('2d');
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, pageW, pageH);
-
-            const positions = [
-                { x: margin, y: margin },
-                { x: margin + labelW + gap, y: margin },
-                { x: margin, y: margin + labelH + gap },
-                { x: margin + labelW + gap, y: margin + labelH + gap }
-            ];
-
-            for (let i = 0; i < codes.length && i < 4; i++) {
-                await drawLabel(ctx, positions[i], labelW, labelH, codes[i], labelDefaultText.value, dpi);
-            }
-
-            return canvas;
+            
+            await drawLabel58(ctx, { x: 0, y: 0 }, pageW, pageH, codes[i], dpi);
+            renderedSheets.push(canvas);
         }
 
-        generateLabelsBtn.addEventListener('click', async () => {
-            const raw = labelCodesList.value.split(/\r?\n/).filter(l => l.trim());
-            if (raw.length === 0) { alert('Введите хотя бы один код!'); return; }
+        previewContent.innerHTML = '';
+        for (let s = 0; s < renderedSheets.length; s++) {
+            const label = document.createElement('div');
+            label.className = 'preview-page-label';
+            label.textContent = `Этикетка ${s + 1} из ${renderedSheets.length}`;
+            previewContent.appendChild(label);
 
-            const codes = raw.map(line => {
-                const parts = line.split(';').map(s => s.trim());
-                return { qr: parts[0], bottom: parts.length > 1 ? parts[1] : '' };
-            });
+            const img = document.createElement('img');
+            img.src = renderedSheets[s].toDataURL('image/png');
+            img.style.maxHeight = '70vh';
+            previewContent.appendChild(img);
+        }
 
-            const dpi = parseInt(labelDpi.value, 10);
-            const sheets = [];
-            for (let i = 0; i < codes.length; i += 4) {
-                sheets.push(codes.slice(i, i + 4));
+        previewOverlay.classList.remove('hidden');
+
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+        console.error(err);
+    } finally {
+        generate58Btn.disabled = false;
+        generate58Btn.textContent = '✨ Предпросмотр и PDF';
+    }
+});
+
+// ===== СКАЧИВАНИЕ PDF =====
+downloadPdfBtn.addEventListener('click', async () => {
+    if (renderedSheets.length === 0) { alert('Нет данных!'); return; }
+    downloadPdfBtn.disabled = true;
+    downloadPdfBtn.textContent = '⏳ Создание...';
+
+    try {
+        const { jsPDF } = window.jspdf;
+        
+        if (currentFormat === 'A4') {
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            for (let s = 0; s < renderedSheets.length; s++) {
+                const imgData = renderedSheets[s].toDataURL('image/png');
+                if (s > 0) pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
             }
-
-            generateLabelsBtn.disabled = true;
-            generateLabelsBtn.textContent = '⏳ Генерация...';
-
-            try {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
-                for (let s = 0; s < sheets.length; s++) {
-                    const canvas = await renderSheetCanvas(sheets[s], dpi);
-                    const imgData = canvas.toDataURL('image/png');
-                    
-                    if (s > 0) pdf.addPage();
-                    
-                    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-                }
-
-                pdf.save(`ozon_labels_${dpi}dpi.pdf`);
-                
-            } catch (err) {
-                console.error(err);
-                alert('Ошибка при генерации PDF: ' + err.message);
-            } finally {
-                generateLabelsBtn.disabled = false;
-                generateLabelsBtn.textContent = '✨ Сгенерировать PDF';
+            pdf.save(`ozon_labels_A4_${currentDpi}dpi.pdf`);
+        } else if (currentFormat === '58x40') {
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [58, 40] });
+            for (let s = 0; s < renderedSheets.length; s++) {
+                const imgData = renderedSheets[s].toDataURL('image/png');
+                if (s > 0) pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, 0, 58, 40);
             }
-        });
+            pdf.save(`ozon_labels_58x40_${currentDpi}dpi.pdf`);
+        }
+        
+        previewOverlay.classList.add('hidden');
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    } finally {
+        downloadPdfBtn.disabled = false;
+        downloadPdfBtn.textContent = '📥 Скачать PDF';
+    }
+});
 
-        // Инициализация
-        setView('grid');
-    })();
+cancelPreviewBtn.addEventListener('click', () => {
+    previewOverlay.classList.add('hidden');
+    renderedSheets = [];
+});
+
+// Инициализация
+loadOzonLogo();
 </script>
 </body>
 </html>
